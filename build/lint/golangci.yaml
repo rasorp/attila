@@ -1,0 +1,16 @@
+version: "2"
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - misspell
+    - staticcheck
+    - unused
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/rasorp/attila
