@@ -1,0 +1,12 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+.DS_Store
+.*.swp
+.idea
+
+# The development build directory.
+/bin/
