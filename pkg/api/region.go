@@ -10,7 +10,7 @@ import (
 
 type Region struct {
 	Name     string       `hcl:"name" json:"name"`
-	Group    string       `hcl:"group" json:"group"`
+	Group    string       `hcl:"group,optional" json:"group"`
 	Auth     *RegionAuth  `hcl:"auth,block" json:"auth"`
 	API      []*RegionAPI `hcl:"api,block" json:"api"`
 	TLS      *RegionTLS   `hcl:"tls,optional" json:"tls,omitempty"`
