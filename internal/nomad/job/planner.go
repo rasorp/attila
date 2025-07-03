@@ -133,7 +133,7 @@ func (p *Planner) runRegisterPlanRule(
 			return nil, err
 		}
 
-		exprProgram, err := expr.Compile(rule.RegionFilter.Expression.Selelctor, expr.AsBool())
+		exprProgram, err := expr.Compile(rule.RegionFilter.Expression.Selector, expr.AsBool())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compile method selector: %w", err)
 		}
@@ -169,9 +169,15 @@ func (p *Planner) runRegisterPlanPicker(
 		Int("num_regions", len(regions)).
 		Msg("performing execution of rule region picker")
 
+	// If no region picker or expression was supplied in the rule, we assume all
+	// regions that passed the filter are picked for registration.
+	if rule.RegionPicker == nil || rule.RegionPicker.Expression == nil {
+		return p.generatePlanResult(rule.Name, regions)
+	}
+
 	regionContext := map[string]any{"regions": regions}
 
-	exprProgram, err := expr.Compile(rule.RegionPicker.Expression.Selelctor, expr.AsKind(reflect.Slice))
+	exprProgram, err := expr.Compile(rule.RegionPicker.Expression.Selector, expr.AsKind(reflect.Slice))
 	if err != nil {
 		return fmt.Errorf("failed to compile picker expression selector: %w", err)
 	}
@@ -181,7 +187,7 @@ func (p *Planner) runRegisterPlanPicker(
 		return fmt.Errorf("failed to run picker expression selector: %w", err)
 	}
 
-	pickedRegions, ok := pickerResult.([]any)
+	pickedRegions, ok := pickerResult.([]*state.Region)
 	if !ok {
 		return fmt.Errorf("picker expression selector returned incorrect type: %T", pickerResult)
 	}
@@ -195,28 +201,26 @@ func (p *Planner) runRegisterPlanPicker(
 //
 // Any failure in calling the Nomad API will result in a failure of the whole
 // function.
-func (p *Planner) generatePlanResult(ruleName string, regions []any) error {
+func (p *Planner) generatePlanResult(ruleName string, regions []*state.Region) error {
 
-	for _, pickpickedRegions := range regions {
+	for _, pickedRegion := range regions {
 
-		r := pickpickedRegions.(*state.Region)
-
-		client, err := p.clients.Get(r.Name)
+		nomadClient, err := p.clients.Get(pickedRegion.Name)
 		if err != nil {
 			return fmt.Errorf("failed to get Nomad client, %w", err)
 		}
 
 		// TODO(jrasell): add support for job plan diff.
-		planResp, _, err := client.Jobs().PlanOpts(p.job, nil, nil)
+		planResp, _, err := nomadClient.Jobs().PlanOpts(p.job, nil, nil)
 		if err != nil {
 			return fmt.Errorf("failed to call Nomad job plan, %w", err)
 		}
 
-		p.plan.AddRegion(r, planResp)
+		p.plan.AddRegion(pickedRegion, planResp)
 
 		p.logger.Info().
 			Str("rule_name", ruleName).
-			Str("region_name", r.Name).
+			Str("region_name", pickedRegion.Name).
 			Msg("region picked by rule picker")
 	}
 
