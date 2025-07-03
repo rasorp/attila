@@ -34,7 +34,7 @@ func outputRule(cliCtx *cli.Context, r *api.JobRegisterRule) {
 		fmt.Sprintf("Name|%s", r.Name),
 		fmt.Sprintf("Region Contexts|%s", contextsAsString(r.RegionContexts)),
 		fmt.Sprintf("Region Filter|%s", r.RegionFilter.Expression.Selector),
-		fmt.Sprintf("Region Picker|%s", r.RegionPicker.Expression.Selector),
+		fmt.Sprintf("Region Picker|%s", formatRegionPicker(r.RegionPicker)),
 		fmt.Sprintf("Create Time|%s", helper.FormatTime(r.Metadata.CreateTime)),
 		fmt.Sprintf("Update Time|%s", helper.FormatTime(r.Metadata.UpdateTime)),
 	}))
@@ -47,4 +47,11 @@ func contextsAsString(ctxs []api.JobRegisterRuleRegionContext) string {
 		s = append(s, string(regionCtx))
 	}
 	return strings.Join(s, ", ")
+}
+
+func formatRegionPicker(rp *api.JobRegisterRulePicker) string {
+	if rp != nil && rp.Expression != nil {
+		return rp.Expression.Selector
+	}
+	return ""
 }

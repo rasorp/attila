@@ -9,6 +9,6 @@ region_filter {
 
 region_picker {
   expression {
-    selector = "filter(regions, .Group == \"europe\" )"
+    selector = "filter(regions, .Group == \"europe\")"
   }
 }
