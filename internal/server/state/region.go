@@ -95,7 +95,14 @@ func (r *Region) SetDefaults() {
 	}
 }
 
+// Validate performs validation of the region object as required by Attila. It
+// performs nil handling, so the caller can blindly call this function without
+// doing this check.
 func (r *Region) Validate() error {
+
+	if r == nil {
+		return errors.New("nil region object")
+	}
 
 	var (
 		numDefault int
@@ -107,7 +114,7 @@ func (r *Region) Validate() error {
 	for _, apiEndpoint := range r.API {
 
 		// If the API endpoint is set to the default, increment our counter, so
-		// we can indentify how many defaults have been set.
+		// we can identify how many defaults have been set.
 		if apiEndpoint.Default {
 			numDefault++
 		}
@@ -136,6 +143,15 @@ func (r *Region) Validate() error {
 		mErr = multierror.Append(mErr, errors.New("group cannot be empty"))
 	}
 
+	// Perform a test generation of the Nomad client if we have at least one API
+	// address to use. The Nomad API performs its own validation steps which we
+	// use.
+	if len(r.API) > 0 {
+		if _, err := r.GenerateNomadClient(); err != nil {
+			mErr = multierror.Append(mErr, err)
+		}
+	}
+
 	return mErr.ErrorOrNil()
 }
 
@@ -156,6 +172,18 @@ func (r *Region) GenerateNomadClient() (*api.Client, error) {
 	// tokens are not hard-coded.
 	if r.Auth != nil && r.Auth.Token != "" {
 		cfg.SecretID = r.Auth.Token
+	}
+
+	// If the region has TLS configuration, add this to the API configuration
+	// block.
+	if r.TLS != nil {
+		cfg.TLSConfig = &api.TLSConfig{
+			CACertPEM:     []byte(r.TLS.CACert),
+			ClientCertPEM: []byte(r.TLS.ClientCert),
+			ClientKeyPEM:  []byte(r.TLS.ClientKey),
+			TLSServerName: r.TLS.ServerName,
+			Insecure:      r.TLS.Insecure,
+		}
 	}
 
 	return api.NewClient(&cfg)

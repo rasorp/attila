@@ -13,7 +13,7 @@ type Region struct {
 	Group    string       `hcl:"group,optional" json:"group"`
 	Auth     *RegionAuth  `hcl:"auth,block" json:"auth"`
 	API      []*RegionAPI `hcl:"api,block" json:"api"`
-	TLS      *RegionTLS   `hcl:"tls,optional" json:"tls,omitempty"`
+	TLS      *RegionTLS   `hcl:"tls,block" json:"tls,omitempty"`
 	Metadata *Metadata    `hcl:"metadata" json:"metadata"`
 }
 
@@ -28,10 +28,10 @@ type RegionAPI struct {
 
 type RegionTLS struct {
 	CACert     string `hcl:"ca_cert" json:"ca_cert"`
-	ClientCert string `hcl:"client_cert" json:"client_cert"`
-	ClientKey  string `hcl:"client_key" json:"client_key"`
-	ServerName string `hcl:"server_name" json:"server_name"`
-	Insecure   bool   `hcl:"insecure" json:"insecure"`
+	ClientCert string `hcl:"client_cert,optional" json:"client_cert"`
+	ClientKey  string `hcl:"client_key,optional" json:"client_key"`
+	ServerName string `hcl:"server_name,optional" json:"server_name"`
+	Insecure   bool   `hcl:"insecure,optional" json:"insecure"`
 }
 
 // DefaultOrFirstAddress returns the default API endpoint address if one has
