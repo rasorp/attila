@@ -30,7 +30,7 @@ func ParseConfig(path string, obj any) error {
 			return fmt.Errorf("failed to unmarshal file: %w", err)
 		}
 	case ".hcl":
-		if err := hclsimple.DecodeFile(path, hclEvalCtx(filepath.Base(path)), obj); err != nil {
+		if err := hclsimple.DecodeFile(path, hclEvalCtx(filepath.Dir(path)), obj); err != nil {
 			return fmt.Errorf("failed to decode file: %w", err)
 		}
 	default:

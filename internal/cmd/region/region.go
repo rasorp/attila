@@ -30,13 +30,25 @@ func Command() *cli.Command {
 
 func outputRegion(cliCtx *cli.Context, r *api.Region) {
 
-	_, _ = fmt.Fprint(cliCtx.App.Writer, helper.FormatKV([]string{
+	outputKV := []string{
 		fmt.Sprintf("Name|%s", r.Name),
 		fmt.Sprintf("Group|%s", r.Group),
 		fmt.Sprintf("TLS Enabled|%v", r.TLS != nil),
+	}
+
+	if r.TLS != nil {
+		outputKV = append(outputKV,
+			fmt.Sprintf("TLS Server Name|%s", r.TLS.ServerName),
+			fmt.Sprintf("TLS Insecure|%v", r.TLS.Insecure),
+		)
+	}
+
+	outputKV = append(outputKV,
 		fmt.Sprintf("Create Time|%s", helper.FormatTime(r.Metadata.CreateTime)),
 		fmt.Sprintf("Update Time|%s", helper.FormatTime(r.Metadata.UpdateTime)),
-	}))
+	)
+
+	_, _ = fmt.Fprint(cliCtx.App.Writer, helper.FormatKV(outputKV))
 
 	out := make([]string, 0, len(r.API)+1)
 	out = append(out, "Address|Default")
@@ -52,11 +64,11 @@ func outputRegion(cliCtx *cli.Context, r *api.Region) {
 	_, _ = fmt.Fprintf(cliCtx.App.Writer, "\n")
 
 	if r.TLS != nil {
-		fmt.Println("\nTLS CA Cert")
-		fmt.Println(r.TLS.CACert)
-		fmt.Println("\nTLS Client Cert")
-		fmt.Println(r.TLS.ClientCert)
-		fmt.Println("\nTLS Client Key")
-		fmt.Println(r.TLS.ClientKey)
+		_, _ = fmt.Fprintf(cliCtx.App.Writer, "\nTLS CA Cert:")
+		_, _ = fmt.Fprintf(cliCtx.App.Writer, "\n%s", r.TLS.CACert)
+		_, _ = fmt.Fprintf(cliCtx.App.Writer, "\nTLS Client Cert:")
+		_, _ = fmt.Fprintf(cliCtx.App.Writer, "\n%s", r.TLS.ClientCert)
+		_, _ = fmt.Fprintf(cliCtx.App.Writer, "\nTLS Client Key:")
+		_, _ = fmt.Fprintf(cliCtx.App.Writer, "\n%s", r.TLS.ClientKey)
 	}
 }
