@@ -25,12 +25,12 @@ import (
 
 func shellCommand() *cli.Command {
 	return &cli.Command{
-		Name:      "run",
+		Name:      "shell",
 		Usage:     "Run and enter a regional shell",
 		Category:  "region",
 		Args:      true,
 		UsageText: "attila region shell [options] [region-name]",
-		Flags:     helper.ClientFlags(),
+		Flags:     shellFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			if numArgs := cliCtx.Args().Len(); numArgs != 1 {
@@ -57,7 +57,13 @@ func shellCommand() *cli.Command {
 
 			ctx := context.Background()
 
-			reader, err := dockerClient.ImagePull(ctx, "hashicorp/nomad:1.9.4", image.PullOptions{})
+			// Build our Docker image reference using the CLI flag variable as
+			// the version identifier. In the future, we may want to allow full
+			// configuration of the image path, so we account for private
+			// registry use.
+			dockerRef := "hashicorp/nomad:" + cliCtx.String("nomad-image-version")
+
+			reader, err := dockerClient.ImagePull(ctx, dockerRef, image.PullOptions{})
 			if err != nil {
 				return cli.Exit(helper.FormatError("failed to run region shell", err), 1)
 			}
@@ -74,7 +80,7 @@ func shellCommand() *cli.Command {
 			}
 
 			resp, err := dockerClient.ContainerCreate(ctx, &container.Config{
-				Image:        "hashicorp/nomad:1.9.4",
+				Image:        dockerRef,
 				Entrypoint:   []string{""},
 				Cmd:          []string{"/bin/ash"},
 				AttachStdout: true,
@@ -134,6 +140,16 @@ func shellCommand() *cli.Command {
 			return nil
 		},
 	}
+}
+
+// shellFlags returns the full set of CLI flags for use with the region shell
+// command including the API client set.
+func shellFlags() []cli.Flag {
+	return append(helper.ClientFlags(), &cli.StringFlag{
+		Name:  "nomad-image-version",
+		Usage: "The Nomad Docker image version identifier to use",
+		Value: "1.10.2",
+	})
 }
 
 func buildEnvVarList(r *api.Region) []string {
