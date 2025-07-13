@@ -87,8 +87,8 @@ github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ
 github.com/hashicorp/golang-lru v0.5.4/go.mod h1:iADmTwqILo4mZ8BN3D2Q6+9jd8WM5uGBxy+E8yxSoD4=
 github.com/hashicorp/golang-lru v1.0.2 h1:dV3g9Z/unq5DpblPpw+Oqcv4dU/1omnb4Ok8iPY6p1c=
 github.com/hashicorp/golang-lru v1.0.2/go.mod h1:iADmTwqILo4mZ8BN3D2Q6+9jd8WM5uGBxy+E8yxSoD4=
-github.com/hashicorp/hcl/v2 v2.20.2-nomad-1 h1:FVr/cgKVheQ9KGEq4sFAiDqls5Yp2Y5+K/WL1Wm5l/s=
-github.com/hashicorp/hcl/v2 v2.20.2-nomad-1/go.mod h1:62ZYHrXgPoX8xBnzl8QzbWq4dyDsDtfCRgIq1rbJEvA=
+github.com/hashicorp/hcl/v2 v2.24.0 h1:2QJdZ454DSsYGoaE6QheQZjtKZSUs9Nh2izTWiwQxvE=
+github.com/hashicorp/hcl/v2 v2.24.0/go.mod h1:oGoO1FIQYfn/AgyOhlg9qLC6/nOJPX3qGbkZpYAcqfM=
 github.com/hashicorp/nomad v1.10.3 h1:I5EqLI+Jqw/nO0pzlRDUO+6WNH5Y98scgEtAdkSi1xY=
 github.com/hashicorp/nomad v1.10.3/go.mod h1:rKbVqi9bUs1oINA0ObJhvAtXvZY0m/Aj6Krh0nn44pg=
 github.com/hashicorp/nomad/api v0.0.0-20250610134639-76e3c2961a1a h1:v261lefntq6bVUyl/YkByzlbhiBXRPdjEL64kFd48Co=
