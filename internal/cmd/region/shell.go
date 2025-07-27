@@ -148,7 +148,7 @@ func shellFlags() []cli.Flag {
 	return append(helper.ClientFlags(), &cli.StringFlag{
 		Name:  "nomad-image-version",
 		Usage: "The Nomad Docker image version identifier to use",
-		Value: "1.10.2",
+		Value: "1.10.3",
 	})
 }
 
