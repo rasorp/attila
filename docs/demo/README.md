@@ -19,7 +19,7 @@ $ nomad agent -dev -config nomad_euw2.hcl
 From the root directory of the Attila repository you should first run `make` to generate the Attila
 binary. From within this directory, you can then start an Attila server.
 ```console
-$ ../../bin/attila server run -log-level=debug
+$ ../../bin/attila server run --log-level=debug --state-memory-enabled=true
 ```
 
 Once the server is running you can first configure the target Nomad regions.
