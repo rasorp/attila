@@ -5,7 +5,9 @@ package state
 
 import (
 	"errors"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/shoenig/test/must"
 
@@ -22,10 +24,21 @@ func TestNewBackend(t *testing.T) {
 		{
 			name: "memory backend",
 			inputConfig: &Config{
-				Memory: &MemoryConfig{Enabled: pointer.Of(true)},
+				Memory: &MemoryConfig{Enable: pointer.Of(true)},
 			},
 			expectedError: nil,
 			expectedName:  "mem",
+		},
+		{
+			name: "file backend",
+			inputConfig: &Config{
+				File: &FileConfig{
+					Enable: pointer.Of(true),
+					Path:   "/tmp/attila-" + strconv.FormatInt(time.Now().UnixNano(), 10),
+				},
+			},
+			expectedError: nil,
+			expectedName:  "file",
 		},
 		{
 			name:          "no backend",
