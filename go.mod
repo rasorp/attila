@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-cty-funcs v0.0.0-20240510212344-9599f7024f07
 	github.com/hashicorp/go-memdb v1.3.5
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/go-set/v3 v3.0.0
+	github.com/hashicorp/go-set/v3 v3.0.1
 	github.com/hashicorp/hcl/v2 v2.20.2-nomad-1
 	github.com/hashicorp/nomad v1.10.3
 	github.com/hashicorp/nomad/api v0.0.0-20250610134639-76e3c2961a1a
