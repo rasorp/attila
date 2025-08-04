@@ -32,7 +32,7 @@ require (
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/docker v28.3.2+incompatible
+	github.com/docker/docker v28.3.3+incompatible
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
