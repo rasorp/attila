@@ -64,6 +64,10 @@ func NewServer(cfg *Config) (*Server, error) {
 
 	server.serverLogger.Info().Msg("successfully setup state backend")
 
+	if err := server.restore(); err != nil {
+		return nil, fmt.Errorf("failed to perform server restore: %w", err)
+	}
+
 	for _, bind := range cfg.HTTP.Binds {
 
 		serverLogger := server.serverLogger.With().
@@ -106,7 +110,38 @@ func NewServer(cfg *Config) (*Server, error) {
 	return &server, nil
 }
 
-// Run is used to serve the HTTP server. The function will block and should be
+// restore handles restoration of Attila systems once the state backend has been
+// set up and is accessible.
+func (s *Server) restore() error {
+
+	// List all the regions within our state, so we can restore the API clients.
+	regionList, err := s.state.Region().List(nil)
+	if err != nil {
+		return err
+	}
+
+	// Iterate the regions stored within the state and restore the controller
+	// client. If we are unable to create the API client, we log the problem but
+	// continue. Causing the server to exit here would require operators to
+	// manually intervene to restore the server. This way, the server will be
+	// able to start and the impacted region configuration fixed when possible.
+	for _, region := range regionList.Regions {
+
+		apiClient, err := region.GenerateNomadClient()
+		if err != nil {
+			s.serverLogger.Err(err).
+				Str("region_name", region.Name).
+				Msg("failed to restore region client")
+			continue
+		}
+
+		s.nomadController.RegionSet(region.Name, apiClient)
+	}
+
+	return nil
+}
+
+// Start is used to serve the HTTP server. The function will block and should be
 // run via a go-routine. Unless http.Server.Serve panics/fails, the server can
 // be stopped by calling the Stop function.
 func (s *Server) Start() {
@@ -129,6 +164,8 @@ func (s *Server) Stop() {
 		} else {
 			srv.logger.Info().Msg("successfully shutdown HTTP server")
 		}
+
+		_ = srv.ln.Close()
 	}
 }
 

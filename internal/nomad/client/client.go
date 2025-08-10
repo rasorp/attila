@@ -43,6 +43,13 @@ func (c *Clients) Get(name string) (*api.Client, error) {
 	return regionClient, nil
 }
 
+func (c *Clients) Num() int {
+	c.clientsLock.RLock()
+	defer c.clientsLock.RUnlock()
+
+	return len(c.clients)
+}
+
 func (c *Clients) Set(name string, client *api.Client) {
 	c.clientsLock.Lock()
 	c.clients[name] = client

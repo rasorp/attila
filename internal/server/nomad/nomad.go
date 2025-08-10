@@ -30,6 +30,11 @@ type ClientController interface {
 
 	// RegionSet
 	RegionSet(name string, client *api.Client)
+
+	// RegionNum returns the number of regions being tracked within the
+	// controller. This is a convenience method used within testing, logging,
+	// and telemetry.
+	RegionNum() int
 }
 
 // TopologyController is the interface that must be satisfied in order to
