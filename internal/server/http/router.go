@@ -19,6 +19,14 @@ func NewRouter(logger zerolog.Logger, accessLevel string, stateStore state.State
 	r.Use(loggerMiddleware(logger, accessLevel))
 
 	r.Route("/v1alpha1", func(r chi.Router) {
+
+		r.Mount(
+			"/topologies",
+			topologiesEndpoint{
+				nomadController: nomadController,
+			}.routes(),
+		)
+
 		r.Mount("/jobs", jobRouter(logger, stateStore, nomadController))
 
 		r.Mount("/regions", regionsEndpoint{

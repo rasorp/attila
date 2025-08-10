@@ -13,6 +13,7 @@ import (
 	"github.com/rasorp/attila/internal/cmd/job"
 	"github.com/rasorp/attila/internal/cmd/region"
 	"github.com/rasorp/attila/internal/cmd/server"
+	"github.com/rasorp/attila/internal/cmd/topology"
 	"github.com/rasorp/attila/internal/version"
 )
 
@@ -32,6 +33,7 @@ func main() {
 			job.Command(),
 			region.Command(),
 			server.Command(),
+			topology.Command(),
 		},
 		Name:  "attila",
 		Usage: "Meta application and scheduling for HashiCorp Nomad",
