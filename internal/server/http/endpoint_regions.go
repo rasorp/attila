@@ -95,7 +95,7 @@ func (a regionsEndpoint) create(w http.ResponseWriter, r *http.Request) {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
 	} else {
-		a.nomadController.RegionClientSet(stateResp.Region.Name, nomadClient)
+		a.nomadController.RegionSet(stateResp.Region.Name, nomadClient)
 		resp := RegionCreateResp{
 			Region:               stateResp.Region,
 			internalResponseMeta: newInternalResponseMeta(http.StatusCreated),
@@ -114,7 +114,7 @@ func (a regionsEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
 	} else {
-		a.nomadController.RegionClientDelete(regionName)
+		a.nomadController.RegionDelete(regionName)
 		resp := RegionDeleteResp{
 			internalResponseMeta: newInternalResponseMeta(http.StatusNoContent),
 		}
