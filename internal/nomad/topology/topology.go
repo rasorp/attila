@@ -57,6 +57,13 @@ func (c *Topology) RegionDelete(name string) {
 	}
 }
 
+func (c *Topology) RegionNum() int {
+	c.regionsLock.RLock()
+	defer c.regionsLock.RUnlock()
+
+	return len(c.regions)
+}
+
 func (c *Topology) GetTopologies() []*nomad.Overview {
 	c.regionsLock.RLock()
 	defer c.regionsLock.RUnlock()

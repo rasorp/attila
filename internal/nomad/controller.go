@@ -43,6 +43,8 @@ func (c *Controller) RegionSet(name string, client *api.Client) {
 	c.topology.RegionSet(name, nil)
 }
 
+func (c *Controller) RegionNum() int { return c.clients.Num() }
+
 func (c *Controller) JobRegistrationPlanCreate(apiJob *api.Job, state state.State) (*state.JobRegisterPlan, error) {
 	return job.NewPlanner(*c.logger, &job.PlannerReq{
 		Clients: c.clients,
