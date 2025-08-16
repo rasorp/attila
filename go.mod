@@ -1,6 +1,6 @@
 module github.com/rasorp/attila
 
-go 1.24.4
+go 1.24.6
 
 require (
 	github.com/expr-lang/expr v1.17.5
