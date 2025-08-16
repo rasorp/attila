@@ -52,10 +52,9 @@ type JobRegisterPlanListResp struct {
 }
 
 type JobRegisterPlan struct {
-	ID           ulid.ULID                         `json:"id"`
-	JobID        string                            `json:"job_id"`
-	JobNamespace string                            `json:"job_namespace"`
-	Regions      map[string]*JobRegisterRegionPlan `json:"regions"`
+	ID      ulid.ULID                         `json:"id"`
+	Job     *api.Job                          `json:"job"`
+	Regions map[string]*JobRegisterRegionPlan `json:"regions"`
 }
 
 type JobRegisterRegionPlan struct {
@@ -63,12 +62,11 @@ type JobRegisterRegionPlan struct {
 	Plan   *api.JobPlanResponse `json:"plan"`
 }
 
-func NewJobRegisterPlan(jobID, jobNamespace string) *JobRegisterPlan {
+func NewJobRegisterPlan(job *api.Job) *JobRegisterPlan {
 	return &JobRegisterPlan{
-		ID:           ulid.Make(),
-		JobID:        jobID,
-		JobNamespace: jobNamespace,
-		Regions:      make(map[string]*JobRegisterRegionPlan),
+		ID:      ulid.Make(),
+		Job:     job,
+		Regions: make(map[string]*JobRegisterRegionPlan),
 	}
 }
 
@@ -80,10 +78,9 @@ func (j *JobRegisterPlan) AddRegion(region *Region, nomadPlan *api.JobPlanRespon
 }
 
 type JobRegisterPlanRun struct {
-	ID           ulid.ULID                            `json:"id"`
-	JobID        string                               `json:"job_id"`
-	JobNamespace string                               `json:"job_namespace"`
-	Regions      map[string]*JobRegisterRegionPlanRun `json:"regions"`
+	ID      ulid.ULID                            `json:"id"`
+	Job     *api.Job                             `json:"job"`
+	Regions map[string]*JobRegisterRegionPlanRun `json:"regions"`
 }
 
 type JobRegisterRegionPlanRun struct {
@@ -92,12 +89,11 @@ type JobRegisterRegionPlanRun struct {
 	Error  error                    `json:"error"`
 }
 
-func NewJobRegisterPlanRun(jobID, jobNamespace string) *JobRegisterPlanRun {
+func NewJobRegisterPlanRun(job *api.Job) *JobRegisterPlanRun {
 	return &JobRegisterPlanRun{
-		ID:           ulid.Make(),
-		JobID:        jobID,
-		JobNamespace: jobNamespace,
-		Regions:      make(map[string]*JobRegisterRegionPlanRun),
+		ID:      ulid.Make(),
+		Job:     job,
+		Regions: make(map[string]*JobRegisterRegionPlanRun),
 	}
 }
 

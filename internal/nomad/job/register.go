@@ -8,51 +8,47 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog"
 
-	"github.com/rasorp/attila/internal/nomad/client"
+	"github.com/rasorp/attila/internal/server/nomad"
 	"github.com/rasorp/attila/internal/server/state"
 )
 
-type Register struct {
-	logger zerolog.Logger
-
-	clients *client.Clients
-	job     *api.Job
+type register struct {
+	clients nomad.ClientController
+	logger  zerolog.Logger
 	state   state.State
-	planID  ulid.ULID
 
+	plan      *state.JobRegisterPlan
 	runResult *state.JobRegisterPlanRun
 }
 
-type RegisterReq struct {
-	Clients *client.Clients
-	Job     *api.Job
-	PlanID  ulid.ULID
-	State   state.State
-}
+func newRegister(
+	clients nomad.ClientController,
+	logger zerolog.Logger,
+	planID ulid.ULID,
+	store state.State,
+) (*register, error) {
 
-func NewRegister(logger zerolog.Logger, req *RegisterReq) *Register {
-	return &Register{
-		clients: req.Clients,
-		job:     req.Job,
-		logger: logger.With().
-			Str("job_id", *req.Job.ID).
-			Str("job_namespace", *req.Job.Namespace).
-			Str("plan_id", req.PlanID.String()).
-			Str("component", "job_register_runner").Logger(),
-		planID:    req.PlanID,
-		runResult: state.NewJobRegisterPlanRun(*req.Job.ID, *req.Job.Namespace),
-		state:     req.State,
-	}
-}
-
-func (r *Register) Run() (*state.JobRegisterPlanRun, error) {
-
-	planResp, err := r.state.JobRegister().Plan().Get(&state.JobRegisterPlanGetReq{ID: r.planID})
+	planResp, err := store.JobRegister().Plan().Get(&state.JobRegisterPlanGetReq{ID: planID})
 	if err != nil {
 		return nil, err
 	}
 
-	for _, plannedRegion := range planResp.Plan.Regions {
+	return &register{
+		clients: clients,
+		logger: logger.With().
+			Str("job_id", *planResp.Plan.Job.ID).
+			Str("job_namespace", *planResp.Plan.Job.Namespace).
+			Str("plan_id", planID.String()).
+			Str("component", "job_register_runner").Logger(),
+		plan:      planResp.Plan,
+		runResult: state.NewJobRegisterPlanRun(planResp.Plan.Job),
+		state:     store,
+	}, nil
+}
+
+func (r *register) run() (*state.JobRegisterPlanRun, error) {
+
+	for _, plannedRegion := range r.plan.Regions {
 		if err := r.runPlannedRegion(plannedRegion); err != nil {
 			return nil, err
 		}
@@ -61,9 +57,9 @@ func (r *Register) Run() (*state.JobRegisterPlanRun, error) {
 	return r.runResult, nil
 }
 
-func (r *Register) runPlannedRegion(regionPlan *state.JobRegisterRegionPlan) error {
+func (r *register) runPlannedRegion(regionPlan *state.JobRegisterRegionPlan) error {
 
-	apiClient, err := r.clients.Get(regionPlan.Region)
+	apiClient, err := r.clients.RegionGet(regionPlan.Region)
 	if err != nil {
 		return err
 	}
@@ -80,7 +76,7 @@ func (r *Register) runPlannedRegion(regionPlan *state.JobRegisterRegionPlan) err
 		Msg("regional job register started")
 
 	//
-	registerResp, _, err := apiClient.Jobs().RegisterOpts(r.job, &registerOpts, nil)
+	registerResp, _, err := apiClient.Jobs().RegisterOpts(r.plan.Job, &registerOpts, nil)
 	r.runResult.AddRegion(regionPlan.Region, registerResp, err)
 
 	if err != nil {

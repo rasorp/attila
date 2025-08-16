@@ -4,17 +4,17 @@
 package topology
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/hashicorp/nomad/api"
 	"github.com/rs/zerolog"
 
-	"github.com/rasorp/attila/internal/nomad/client"
 	"github.com/rasorp/attila/internal/server/nomad"
 )
 
 type Topology struct {
-	clients *client.Clients
+	clients nomad.ClientController
 	logger  zerolog.Logger
 
 	// regions stores the topology collector for the named region. Access should
@@ -23,12 +23,33 @@ type Topology struct {
 	regionsLock sync.RWMutex
 }
 
-func New(logger *zerolog.Logger, clients *client.Clients) nomad.TopologyController {
+func New(logger *zerolog.Logger, clients nomad.ClientController) nomad.TopologyController {
 	return &Topology{
 		clients: clients,
-		logger:  logger.With().Str("component", "topology").Logger(),
+		logger:  logger.With().Str("component", "topology_controller").Logger(),
 		regions: make(map[string]*region),
 	}
+}
+
+func (c *Topology) RegionDelete(name string) {
+	c.regionsLock.Lock()
+	defer c.regionsLock.Unlock()
+
+	if capacityRunner, ok := c.regions[name]; ok {
+		capacityRunner.stop()
+		delete(c.regions, name)
+	}
+}
+
+func (c *Topology) RegionGet(_ string) (*api.Client, error) {
+	return nil, errors.New("topology controller does not return Nomad clients")
+}
+
+func (c *Topology) RegionNum() int {
+	c.regionsLock.RLock()
+	defer c.regionsLock.RUnlock()
+
+	return len(c.regions)
 }
 
 func (c *Topology) RegionSet(name string, _ *api.Client) {
@@ -45,23 +66,6 @@ func (c *Topology) RegionSet(name string, _ *api.Client) {
 
 	c.regions[name] = newRegion(name, c.clients, c.logger)
 	go c.regions[name].run()
-}
-
-func (c *Topology) RegionDelete(name string) {
-	c.regionsLock.Lock()
-	defer c.regionsLock.Unlock()
-
-	if capacityRunner, ok := c.regions[name]; ok {
-		capacityRunner.stop()
-		delete(c.regions, name)
-	}
-}
-
-func (c *Topology) RegionNum() int {
-	c.regionsLock.RLock()
-	defer c.regionsLock.RUnlock()
-
-	return len(c.regions)
 }
 
 func (c *Topology) GetTopologies() []*nomad.Overview {

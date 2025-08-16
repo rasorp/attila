@@ -13,20 +13,29 @@ import (
 // Controller
 type Controller interface {
 	ClientController
-
-	// JobRegistrationPlanCreate
-	JobRegistrationPlanCreate(job *api.Job, state state.State) (*state.JobRegisterPlan, error)
-
-	// JobRegistrationRun
-	JobRegistrationRun(planID ulid.ULID, job *api.Job, state state.State) (*state.JobRegisterPlanRun, error)
-
+	JobController
 	TopologyController
+}
+
+// JobController is the interface that must be satisfied in order to implement
+// Attila's backend that performs Nomad job planning and registration.
+type JobController interface {
+
+	// JobRegistrationPlan generates a job registration plan by processing the
+	// submitted job against Attila's stored registration methods and rules.
+	JobRegistrationPlan(job *api.Job) (*state.JobRegisterPlan, error)
+
+	// JobRegistrationRun executes the job registration plan as specified by the
+	// passed plan ID.
+	JobRegistrationRun(planID ulid.ULID) (*state.JobRegisterPlanRun, error)
 }
 
 type ClientController interface {
 
 	// RegionDelete
 	RegionDelete(name string)
+
+	RegionGet(name string) (*api.Client, error)
 
 	// RegionSet
 	RegionSet(name string, client *api.Client)

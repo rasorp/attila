@@ -6,10 +6,8 @@ package plan
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/fatih/color"
-	"github.com/hashicorp/nomad/jobspec2"
 	"github.com/oklog/ulid/v2"
 	"github.com/urfave/cli/v2"
 
@@ -23,15 +21,15 @@ func runCommand() *cli.Command {
 		Usage:     "Run a job registration plan",
 		Category:  "plan",
 		Args:      true,
-		UsageText: "attila job register plan run [options] [plan-id] [job-spec]",
-		Flags:     append(helper.ClientFlags(), runFlags()...),
+		UsageText: "attila job register plan run [options] [plan-id]",
+		Flags:     helper.ClientFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			cliArgs := cliCtx.Args()
 
-			if cliArgs.Len() != 2 {
+			if cliArgs.Len() != 1 {
 				return cli.Exit(helper.FormatError(runCLIErrorMsg,
-					fmt.Errorf("expected 2 arguments, got %v", cliArgs.Len())), 1)
+					fmt.Errorf("expected 1 argument, got %v", cliArgs.Len())), 1)
 			}
 
 			id, err := ulid.Parse(cliArgs.First())
@@ -39,31 +37,9 @@ func runCommand() *cli.Command {
 				return cli.Exit(helper.FormatError(runCLIErrorMsg, err), 1)
 			}
 
-			jobfile := cliArgs.Get(1)
-
-			jobsepcBytes, err := os.ReadFile(jobfile)
-			if err != nil {
-				return cli.Exit(helper.FormatError(runCLIErrorMsg,
-					fmt.Errorf("failed to read jobspec file: %w", err)), 1)
-			}
-
-			jobspecParseConfig := jobspec2.ParseConfig{
-				Path:     jobfile,
-				Body:     jobsepcBytes,
-				ArgVars:  cliCtx.StringSlice("jobspec-var"),
-				VarFiles: cliCtx.StringSlice("jobspec-var-file"),
-				Strict:   true,
-			}
-
-			parsedJobspec, err := jobspec2.ParseWithConfig(&jobspecParseConfig)
-			if err != nil {
-				return cli.Exit(helper.FormatError(runCLIErrorMsg,
-					fmt.Errorf("failed to parse jobspec: %w", err)), 1)
-			}
-
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			req := api.JobsRegisterPlanRunReq{ID: id, Job: parsedJobspec}
+			req := api.JobsRegisterPlanRunReq{ID: id}
 
 			resp, _, err := client.JobRegisterPlans().Run(context.Background(), &req)
 			if err != nil {
@@ -72,21 +48,6 @@ func runCommand() *cli.Command {
 
 			outputPlanRun(cliCtx, resp)
 			return nil
-		},
-	}
-}
-
-func runFlags() []cli.Flag {
-	return []cli.Flag{
-		&cli.StringSliceFlag{
-			Name:  "jobspec-var-file",
-			Value: cli.NewStringSlice(),
-			Usage: "The path to a HCL2 file containing user variables",
-		},
-		&cli.StringSliceFlag{
-			Name:  "jobspec-var",
-			Value: cli.NewStringSlice(),
-			Usage: "A HCL2 user variable",
 		},
 	}
 }

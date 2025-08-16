@@ -17,49 +17,47 @@ import (
 
 type Controller struct {
 	logger   *zerolog.Logger
-	clients  *client.Clients
+	clients  nomad.ClientController
+	job      nomad.JobController
 	topology nomad.TopologyController
 }
 
-func NewController(logger *zerolog.Logger) nomad.Controller {
+func NewController(logger *zerolog.Logger, store state.State) nomad.Controller {
 
 	clientStore := client.New(*logger)
 	topologyController := topology.New(logger, clientStore)
+	jobController := job.New(clientStore, logger, store)
 
 	return &Controller{
 		logger:   logger,
 		clients:  clientStore,
+		job:      jobController,
 		topology: topologyController,
 	}
 }
 
 func (c *Controller) RegionDelete(name string) {
 	c.topology.RegionDelete(name)
-	c.clients.Delete(name)
+	c.clients.RegionDelete(name)
+}
+
+func (c *Controller) RegionGet(name string) (*api.Client, error) {
+	return c.clients.RegionGet(name)
 }
 
 func (c *Controller) RegionSet(name string, client *api.Client) {
-	c.clients.Set(name, client)
+	c.clients.RegionSet(name, client)
 	c.topology.RegionSet(name, nil)
 }
 
-func (c *Controller) RegionNum() int { return c.clients.Num() }
+func (c *Controller) RegionNum() int { return c.clients.RegionNum() }
 
-func (c *Controller) JobRegistrationPlanCreate(apiJob *api.Job, state state.State) (*state.JobRegisterPlan, error) {
-	return job.NewPlanner(*c.logger, &job.PlannerReq{
-		Clients: c.clients,
-		Job:     apiJob,
-		State:   state,
-	}).Run()
+func (c *Controller) JobRegistrationPlan(job *api.Job) (*state.JobRegisterPlan, error) {
+	return c.job.JobRegistrationPlan(job)
 }
 
-func (c *Controller) JobRegistrationRun(planID ulid.ULID, apiJob *api.Job, state state.State) (*state.JobRegisterPlanRun, error) {
-	return job.NewRegister(*c.logger, &job.RegisterReq{
-		Clients: c.clients,
-		Job:     apiJob,
-		PlanID:  planID,
-		State:   state,
-	}).Run()
+func (c *Controller) JobRegistrationRun(planID ulid.ULID) (*state.JobRegisterPlanRun, error) {
+	return c.job.JobRegistrationRun(planID)
 }
 
 func (c *Controller) GetTopologies() []*nomad.Overview {

@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/nomad/api"
 	"github.com/rs/zerolog"
 
-	"github.com/rasorp/attila/internal/nomad/client"
 	"github.com/rasorp/attila/internal/server/nomad"
 )
 
@@ -21,7 +20,7 @@ var defaultCollectionInterval = 1 * time.Minute
 
 type region struct {
 	name    string
-	clients *client.Clients
+	clients nomad.ClientController
 	logger  zerolog.Logger
 
 	// result stores the last fetched result of the region topology. All access
@@ -34,7 +33,7 @@ type region struct {
 	shutdownCh chan struct{}
 }
 
-func newRegion(name string, clients *client.Clients, logger zerolog.Logger) *region {
+func newRegion(name string, clients nomad.ClientController, logger zerolog.Logger) *region {
 	return &region{
 		name:       name,
 		clients:    clients,
@@ -92,7 +91,7 @@ func (r *region) runExecute() {
 	startTime := time.Now()
 	r.logger.Info().Msg("performing execution of data collection")
 
-	apiClient, err := r.clients.Get(r.name)
+	apiClient, err := r.clients.RegionGet(r.name)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("failed to get API client")
 		return

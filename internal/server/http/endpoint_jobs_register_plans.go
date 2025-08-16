@@ -42,10 +42,6 @@ type JobsRegisterPlansListResp struct {
 	internalResponseMeta `json:"-"`
 }
 
-type JobsRegisterPlansRunReq struct {
-	Job *api.Job `json:"job"`
-}
-
 type JobsRegisterPlansRunResp struct {
 	Run                  *state.JobRegisterPlanRun `json:"run"`
 	PatrialFailureError  error                     `json:"partial_failure_error"`
@@ -88,7 +84,7 @@ func (j jobsRegisterPlansEndpoint) create(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	controllerResp, err := j.nomadController.JobRegistrationPlanCreate(req.Job, j.state)
+	controllerResp, err := j.nomadController.JobRegistrationPlan(req.Job)
 	if err != nil {
 		httpWriteResponseError(w, NewResponseError(err, http.StatusInternalServerError))
 		return
@@ -153,17 +149,9 @@ func (j jobsRegisterPlansEndpoint) list(w http.ResponseWriter, r *http.Request) 
 
 func (j jobsRegisterPlansEndpoint) run(w http.ResponseWriter, r *http.Request) {
 
-	var httpReq JobsRegisterPlansRunReq
-
-	if err := json.NewDecoder(r.Body).Decode(&httpReq); err != nil {
-		httpWriteResponseError(w,
-			NewResponseError(fmt.Errorf("failed to decode object: %w", err), http.StatusBadRequest))
-		return
-	}
-
 	planID := r.Context().Value("id").(ulid.ULID)
 
-	result, err := j.nomadController.JobRegistrationRun(planID, httpReq.Job, j.state)
+	result, err := j.nomadController.JobRegistrationRun(planID)
 	if err != nil && result == nil {
 		httpWriteResponseError(w, NewResponseError(err, http.StatusInternalServerError))
 		return

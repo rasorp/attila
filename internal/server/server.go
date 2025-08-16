@@ -59,7 +59,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		baseLogger:      zerologger,
 		serverLogger:    pointer.Of(zerologger.With().Str("component", "server").Logger()),
 		state:           stateBackend,
-		nomadController: nomadControler.NewController(zerologger),
+		nomadController: nomadControler.NewController(zerologger, stateBackend),
 	}
 
 	server.serverLogger.Info().Msg("successfully setup state backend")

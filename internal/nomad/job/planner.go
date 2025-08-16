@@ -13,42 +13,40 @@ import (
 	"github.com/hashicorp/nomad/api"
 	"github.com/rs/zerolog"
 
-	"github.com/rasorp/attila/internal/nomad/client"
+	"github.com/rasorp/attila/internal/server/nomad"
 	"github.com/rasorp/attila/internal/server/state"
 )
 
-type Planner struct {
-	logger zerolog.Logger
-
-	clients *client.Clients
+type planner struct {
+	clients nomad.ClientController
 	job     *api.Job
+	logger  zerolog.Logger
 	state   state.State
 
 	//
 	plan *state.JobRegisterPlan
 }
 
-type PlannerReq struct {
-	Clients *client.Clients
-	Job     *api.Job
-	State   state.State
-}
-
-func NewPlanner(logger zerolog.Logger, req *PlannerReq) *Planner {
-	return &Planner{
-		clients: req.Clients,
-		job:     req.Job,
+func newPlanner(
+	clients nomad.ClientController,
+	logger zerolog.Logger,
+	stateStore state.State,
+	job *api.Job,
+) *planner {
+	return &planner{
+		clients: clients,
+		job:     job,
 		logger: logger.With().
-			Str("job_id", *req.Job.ID).
-			Str("job_namespace", *req.Job.Namespace).
+			Str("job_id", *job.ID).
+			Str("job_namespace", *job.Namespace).
 			Str("component", "job_register_planner").
 			Logger(),
-		plan:  state.NewJobRegisterPlan(*req.Job.ID, *req.Job.Namespace),
-		state: req.State,
+		plan:  state.NewJobRegisterPlan(job),
+		state: stateStore,
 	}
 }
 
-func (p *Planner) Run() (*state.JobRegisterPlan, error) {
+func (p *planner) run() (*state.JobRegisterPlan, error) {
 
 	listResp, err := p.state.JobRegister().Method().List(nil)
 	if err != nil {
@@ -110,7 +108,7 @@ func (p *Planner) Run() (*state.JobRegisterPlan, error) {
 	return p.plan, nil
 }
 
-func (p *Planner) runRegisterPlanRule(
+func (p *planner) runRegisterPlanRule(
 	rule *state.JobRegisterRule, regions []*state.Region) ([]*state.Region, error) {
 
 	filteredRegions := set.New[*state.Region](0)
@@ -122,7 +120,7 @@ func (p *Planner) runRegisterPlanRule(
 			Str("region_name", region.Name).
 			Msg("performing execution of rule region filter")
 
-		regionClient, err := p.clients.Get(region.Name)
+		regionClient, err := p.clients.RegionGet(region.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -161,7 +159,7 @@ func (p *Planner) runRegisterPlanRule(
 // runRegisterPlanPicker executes the job registration plan from the picker
 // stage onwards and includes populating the result entries for any picked and
 // planned regions.
-func (p *Planner) runRegisterPlanPicker(
+func (p *planner) runRegisterPlanPicker(
 	rule *state.JobRegisterRule, regions []*state.Region) error {
 
 	p.logger.Debug().
@@ -201,11 +199,11 @@ func (p *Planner) runRegisterPlanPicker(
 //
 // Any failure in calling the Nomad API will result in a failure of the whole
 // function.
-func (p *Planner) generatePlanResult(ruleName string, regions []*state.Region) error {
+func (p *planner) generatePlanResult(ruleName string, regions []*state.Region) error {
 
 	for _, pickedRegion := range regions {
 
-		nomadClient, err := p.clients.Get(pickedRegion.Name)
+		nomadClient, err := p.clients.RegionGet(pickedRegion.Name)
 		if err != nil {
 			return fmt.Errorf("failed to get Nomad client, %w", err)
 		}

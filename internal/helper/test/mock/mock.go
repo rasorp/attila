@@ -4,8 +4,10 @@
 package mock
 
 import (
+	"github.com/hashicorp/nomad/api"
 	"github.com/oklog/ulid/v2"
 
+	"github.com/rasorp/attila/internal/helper/pointer"
 	"github.com/rasorp/attila/internal/server/state"
 )
 
@@ -54,9 +56,11 @@ func JobRegistrationMethod() *state.JobRegisterMethod {
 
 func JobRegistrationPlan() *state.JobRegisterPlan {
 	return &state.JobRegisterPlan{
-		ID:           ulid.Make(),
-		JobID:        "example",
-		JobNamespace: "default",
+		ID: ulid.Make(),
+		Job: &api.Job{
+			ID:        pointer.Of("mock-" + ulid.Make().String()),
+			Namespace: pointer.Of("platform"),
+		},
 	}
 }
 

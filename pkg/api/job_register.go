@@ -289,8 +289,7 @@ type JobRegisterPlanListResp struct {
 }
 
 type JobsRegisterPlanRunReq struct {
-	ID  ulid.ULID `json:"id"`
-	Job *api.Job  `json:"job"`
+	ID ulid.ULID `json:"id"`
 }
 
 type JobsRegisterPlanRunResp struct {
