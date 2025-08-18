@@ -3,7 +3,7 @@ module github.com/rasorp/attila
 go 1.24.6
 
 require (
-	github.com/expr-lang/expr v1.17.5
+	github.com/expr-lang/expr v1.17.6
 	github.com/fatih/color v1.18.0
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/hashicorp/go-cty-funcs v0.0.0-20240510212344-9599f7024f07
