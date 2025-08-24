@@ -45,7 +45,17 @@ help: ## Display this usage information
 lint: ## Lint the Attila code
 	@echo "==> Linting Attila source code..."
 	@golangci-lint run -c ./build/lint/golangci.yaml ./...
+	@echo "==> Done"
+
+	@echo "==> License copywrite check of Attila source code..."
 	@copywrite --config build/license/copywrite.hcl headers --plan
+	@echo "==> Done"
+
+	@echo "==> Running gopls moderniztion analysis..."
+	@go run \
+	    golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@v0.20.0 -fix -test ./...
+	@if (git status -s | grep -q -e '\.go$$'); then \
+	    echo modernize analysis found corrections:; git status -s | grep -e '\.go$$'; exit 1; fi
 	@echo "==> Done"
 
 .PHONY: lint-deps

@@ -38,7 +38,7 @@ func New(cfg *Config) (*zerolog.Logger, error) {
 	// which makes it easier to grok.
 	if cfg.Format == "human" {
 		zerologLogger = zerologLogger.Output(zerolog.ConsoleWriter{
-			FormatLevel: func(i interface{}) string {
+			FormatLevel: func(i any) string {
 				return strings.ToUpper(fmt.Sprintf("%-5s", i))
 			},
 			TimeFormat: time.RFC3339,

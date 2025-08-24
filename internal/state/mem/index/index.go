@@ -27,7 +27,7 @@ type SingleIndexer struct {
 // only a single argument.
 type ReadIndex func(arg any) ([]byte, error)
 
-func (f ReadIndex) FromArgs(args ...interface{}) ([]byte, error) {
+func (f ReadIndex) FromArgs(args ...any) ([]byte, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("index supports only a single arg")
 	}
