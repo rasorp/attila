@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func httpWriteResponse(w http.ResponseWriter, obj interface{}) {
+func httpWriteResponse(w http.ResponseWriter, obj any) {
 
 	code := http.StatusInternalServerError
 

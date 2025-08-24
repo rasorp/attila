@@ -87,7 +87,7 @@ func NewClient(cfg *Config) *Client {
 
 type RequestOption func(req *http.Request)
 
-func (c *Client) NewRequest(method, path string, body interface{}, opts ...RequestOption) (*http.Request, error) {
+func (c *Client) NewRequest(method, path string, body any, opts ...RequestOption) (*http.Request, error) {
 
 	if !strings.HasPrefix(path, "/") {
 		return nil, errors.New("path missing slash prefix")
@@ -125,7 +125,7 @@ func (c *Client) NewRequest(method, path string, body interface{}, opts ...Reque
 	return req, nil
 }
 
-func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*Response, error) {
+func (c *Client) Do(ctx context.Context, req *http.Request, v any) (*Response, error) {
 	resp, err := c.bareDo(ctx, req)
 	if err != nil {
 		return resp, err
