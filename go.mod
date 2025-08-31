@@ -5,7 +5,7 @@ go 1.24.6
 require (
 	github.com/expr-lang/expr v1.17.6
 	github.com/fatih/color v1.18.0
-	github.com/go-chi/chi/v5 v5.2.2
+	github.com/go-chi/chi/v5 v5.2.3
 	github.com/hashicorp/go-cty-funcs v0.0.0-20240510212344-9599f7024f07
 	github.com/hashicorp/go-memdb v1.3.5
 	github.com/hashicorp/go-multierror v1.1.1
