@@ -16,7 +16,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/rs/zerolog v1.34.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
-	github.com/shoenig/test v1.12.1
+	github.com/shoenig/test v1.12.2
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/zclconf/go-cty v1.17.0
 	github.com/zclconf/go-cty-yaml v1.1.0
