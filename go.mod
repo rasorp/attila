@@ -19,7 +19,7 @@ require (
 	github.com/shoenig/test v1.12.2
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/zclconf/go-cty v1.17.0
-	github.com/zclconf/go-cty-yaml v1.1.0
+	github.com/zclconf/go-cty-yaml v1.2.0
 )
 
 require (
