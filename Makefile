@@ -74,5 +74,5 @@ test: ## Test the Attila code
 .PHONY: test-deps
 test-deps: ## Install Attila test dependencies
 	@echo "==> Installing test dependencies..."
-	@go install gotest.tools/gotestsum@v1.12.0
+	@go install gotest.tools/gotestsum@v1.13.0
 	@echo "==> Done"
