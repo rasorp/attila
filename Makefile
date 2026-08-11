@@ -61,7 +61,7 @@ lint: ## Lint the Attila code
 .PHONY: lint-deps
 lint-deps: ## Install Attila lint dependencies
 	@echo "==> Installing lint dependencies..."
-	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6
+	@go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 	@go install github.com/hashicorp/copywrite@v0.22.0
 	@echo "==> Done"
 
