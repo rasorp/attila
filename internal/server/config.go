@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/go-set/v3"
 	"github.com/rs/zerolog"
 
@@ -39,21 +38,21 @@ func (c *Config) Merge(z *Config) *Config {
 
 func (c *Config) Validate() error {
 
-	var mErr *multierror.Error
+	var errs []error
 
 	if err := c.Log.Validate(); err != nil {
-		mErr = multierror.Append(mErr, err)
+		errs = append(errs, err)
 	}
 
 	if err := c.State.Validate(); err != nil {
-		mErr = multierror.Append(mErr, err)
+		errs = append(errs, err)
 	}
 
 	if err := c.HTTP.Validate(); err != nil {
-		mErr = multierror.Append(mErr, err)
+		errs = append(errs, err)
 	}
 
-	return mErr.ErrorOrNil()
+	return errors.Join(errs...)
 }
 
 type HTTPConfig struct {
@@ -71,29 +70,29 @@ func (h *HTTPConfig) Validate() error {
 		return errors.New("http config block required")
 	}
 
-	var mErr *multierror.Error
+	var errs []error
 
 	if len(h.Binds) < 1 {
-		mErr = multierror.Append(mErr, errors.New("http bind address required"))
+		errs = append(errs, errors.New("http bind address required"))
 	}
 	if _, err := zerolog.ParseLevel(strings.ToLower(h.AccessLogLevel)); err != nil {
-		mErr = multierror.Append(mErr, fmt.Errorf("failed to parse access log level: %w", err))
+		errs = append(errs, fmt.Errorf("failed to parse access log level: %w", err))
 	}
 
 	for _, bind := range h.Binds {
 		parsedURL, err := url.Parse(bind.Addr)
 		if err != nil {
-			mErr = multierror.Append(mErr, fmt.Errorf("failed to parse bind address: %w", err))
-		}
-
-		switch parsedURL.Scheme {
-		case "unix", "http", "https":
-		default:
-			mErr = multierror.Append(mErr, fmt.Errorf("unsupported bind protocol %q", parsedURL.Scheme))
+			errs = append(errs, fmt.Errorf("failed to parse bind address: %w", err))
+		} else {
+			switch parsedURL.Scheme {
+			case "unix", "http", "https":
+			default:
+				errs = append(errs, fmt.Errorf("unsupported bind protocol %q", parsedURL.Scheme))
+			}
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func (h *HTTPConfig) Merge(z *HTTPConfig) *HTTPConfig {

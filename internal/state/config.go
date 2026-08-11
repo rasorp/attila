@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 type Config struct {
@@ -27,7 +25,7 @@ func DefaultConfig() *Config {
 
 // Validate performs validation on the config object and all nested
 // configuration blocks. The function can be called safely without checking if
-// the object is nil. The returned error could be a multierror and should
+// the object is nil. The returned error could wrap multiple errors and should
 // indicate a terminal error in the process which intends to use the config
 // object.
 func (c *Config) Validate() error {
@@ -38,7 +36,7 @@ func (c *Config) Validate() error {
 
 	var (
 		numEnabled int
-		mErr       *multierror.Error
+		errs       []error
 	)
 
 	if c.Memory.Enabled() {
@@ -49,20 +47,20 @@ func (c *Config) Validate() error {
 		numEnabled++
 
 		if err := c.File.Validate(); err != nil {
-			mErr = multierror.Append(mErr, err)
+			errs = append(errs, err)
 		}
 	}
 
 	// We must have one configured backend.
 	switch numEnabled {
 	case 0:
-		mErr = multierror.Append(mErr, errors.New("no state backend enabled"))
+		errs = append(errs, errors.New("no state backend enabled"))
 	case 1:
 	default:
-		mErr = multierror.Append(mErr, errors.New("only one storage backend can be enabled"))
+		errs = append(errs, errors.New("only one storage backend can be enabled"))
 	}
 
-	return mErr.ErrorOrNil()
+	return errors.Join(errs...)
 }
 
 func (c *Config) Merge(z *Config) *Config {
@@ -119,8 +117,8 @@ func (f *FileConfig) Enabled() bool {
 
 // Validate performs validation of the file configuration block. If it is not
 // enabled, the validation functionality will not run. The returned error could
-// be a multierror and should indicate a terminal error in the process which
-// intends to use the config object.
+// wrap multiple errors and should indicate a terminal error in the process
+// which intends to use the config object.
 func (f *FileConfig) Validate() error {
 
 	// If the file backend is not enabled, then do not perform any further
@@ -130,7 +128,7 @@ func (f *FileConfig) Validate() error {
 	}
 
 	// Check the directory value is as expected. Without confirming this we
-	// cannot reliably perform further checks, so do not use a multierror here.
+	// cannot reliably perform further checks, so do not use a multi-error here.
 	if f.Path == "" {
 		return errors.New("must set path parameter")
 	}
@@ -138,17 +136,17 @@ func (f *FileConfig) Validate() error {
 		return fmt.Errorf("path %q is not an absolute path", f.Path)
 	}
 
-	var mErr *multierror.Error
+	var errs []error
 
 	// Reaching this point we have an absolute path configured. This must exist
 	// on the filesystem and be a directory.
 	dir, err := os.Stat(f.Path)
 	if err != nil {
-		mErr = multierror.Append(mErr, err)
+		errs = append(errs, err)
 	}
 	if dir != nil && !dir.IsDir() {
-		mErr = multierror.Append(mErr, fmt.Errorf("path %q is not a dir", f.Path))
+		errs = append(errs, fmt.Errorf("path %q is not a dir", f.Path))
 	}
 
-	return mErr.ErrorOrNil()
+	return errors.Join(errs...)
 }

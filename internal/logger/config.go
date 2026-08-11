@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/rs/zerolog"
 
 	"github.com/rasorp/attila/internal/helper/pointer"
@@ -36,19 +35,19 @@ func (c *Config) Validate() error {
 		return errors.New("log config block required")
 	}
 
-	var mErr *multierror.Error
+	var errs []error
 
 	if _, err := zerolog.ParseLevel(strings.ToLower(c.Level)); err != nil {
-		mErr = multierror.Append(mErr, fmt.Errorf("failed to parse level: %w", err))
+		errs = append(errs, fmt.Errorf("failed to parse level: %w", err))
 	}
 
 	switch c.Format {
 	case "human", "json":
 	default:
-		mErr = multierror.Append(mErr, fmt.Errorf("unsupported format: %q", c.Format))
+		errs = append(errs, fmt.Errorf("unsupported format: %q", c.Format))
 	}
 
-	return mErr.ErrorOrNil()
+	return errors.Join(errs...)
 }
 
 func (c *Config) Merge(z *Config) *Config {

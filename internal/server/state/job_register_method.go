@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/expr-lang/expr"
-	"github.com/hashicorp/go-multierror"
 )
 
 type JobRegisterMethodState interface {
@@ -55,25 +54,25 @@ type JobRegisterMethod struct {
 
 func (am *JobRegisterMethod) Validate() error {
 
-	var mErr *multierror.Error
+	var errs []error
 
 	if len(am.Rules) < 1 {
-		mErr = multierror.Append(mErr, errors.New("at least one rule required"))
+		errs = append(errs, errors.New("at least one rule required"))
 	} else {
 		for i, rule := range am.Rules {
 			if err := rule.Validate(); err != nil {
-				mErr = multierror.Append(mErr, fmt.Errorf("rule %v, %w", i, err))
+				errs = append(errs, fmt.Errorf("rule %v, %w", i, err))
 			}
 		}
 	}
 
 	if am.Selector != "" {
 		if _, err := expr.Compile(am.Selector, expr.AsBool()); err != nil {
-			mErr = multierror.Append(mErr, fmt.Errorf("failed to compile expression: %w", err))
+			errs = append(errs, fmt.Errorf("failed to compile expression: %w", err))
 		}
 	}
 
-	return mErr.ErrorOrNil()
+	return errors.Join(errs...)
 }
 
 func (am *JobRegisterMethod) Stub() *JobRegisterMethodStub {
@@ -94,11 +93,11 @@ type JobRegisterMethodRuleLink struct {
 
 func (arl *JobRegisterMethodRuleLink) Validate() error {
 
-	var mErr *multierror.Error
+	var errs []error
 
 	if arl.Name == "" {
-		mErr = multierror.Append(mErr, errors.New("name required"))
+		errs = append(errs, errors.New("name required"))
 	}
 
-	return mErr.ErrorOrNil()
+	return errors.Join(errs...)
 }

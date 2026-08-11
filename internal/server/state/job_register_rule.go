@@ -9,7 +9,6 @@ import (
 	"reflect"
 
 	"github.com/expr-lang/expr"
-	"github.com/hashicorp/go-multierror"
 )
 
 type JobRegisterRuleState interface {
@@ -61,19 +60,19 @@ type JobRegisterRule struct {
 func (a *JobRegisterRule) Validate() error {
 
 	// Protect against complete incorrect use which would cause the server to
-	// panic. This does not use the multierror because it will be the only error
+	// panic. This does not use a multi-error because it will be the only error
 	// to occur.
 	if a == nil {
 		return errors.New("job register rule is empty")
 	}
 
-	var mErr *multierror.Error
+	var errs []error
 
 	if err := a.RegionPicker.Validate(); err != nil {
-		mErr = multierror.Append(mErr, err)
+		errs = append(errs, err)
 	}
 
-	return mErr.ErrorOrNil()
+	return errors.Join(errs...)
 }
 
 func (a *JobRegisterRule) Stub() *JobRegisterRuleStub {
