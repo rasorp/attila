@@ -169,9 +169,9 @@ func (j jobsRegisterPlansEndpoint) run(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respnseCode := http.StatusCreated
+	responseCode := http.StatusCreated
 	if err != nil {
-		respnseCode = http.StatusInternalServerError
+		responseCode = http.StatusInternalServerError
 	}
 
 	stateReq := state.JobRegisterPlanDeleteReq{ID: planID}
@@ -183,7 +183,7 @@ func (j jobsRegisterPlansEndpoint) run(w http.ResponseWriter, r *http.Request) {
 	httpWriteResponse(w, &JobsRegisterPlansRunResp{
 		Run:                  result,
 		PatrialFailureError:  err,
-		internalResponseMeta: newInternalResponseMeta(respnseCode),
+		internalResponseMeta: newInternalResponseMeta(responseCode),
 	})
 }
 
