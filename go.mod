@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/expr-lang/expr v1.17.8
-	github.com/fatih/color v1.18.0
+	github.com/fatih/color v1.19.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/hashicorp/go-cty-funcs v0.1.0
 	github.com/hashicorp/go-memdb v1.3.5
