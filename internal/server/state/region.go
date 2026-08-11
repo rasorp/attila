@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/go-set/v3"
 	"github.com/hashicorp/nomad/api"
 )
@@ -106,7 +105,7 @@ func (r *Region) Validate() error {
 
 	var (
 		numDefault int
-		mErr       *multierror.Error
+		errs       []error
 	)
 
 	addrSet := set.New[string](0)
@@ -119,10 +118,10 @@ func (r *Region) Validate() error {
 			numDefault++
 		}
 
-		// Inset the address into our set. A false response indicates the
+		// Insert the address into our set. A false response indicates the
 		// address is already held in the set and therefore is a duplicate.
 		if !addrSet.Insert(apiEndpoint.Address) {
-			mErr = multierror.Append(mErr,
+			errs = append(errs,
 				fmt.Errorf("duplicate API address found: %q", apiEndpoint.Address))
 		}
 	}
@@ -130,17 +129,17 @@ func (r *Region) Validate() error {
 	// The operator must set at least one Nomad API endpoint to talk, otherwise
 	// there is no way to talk to the reg
 	if addrSet.Size() < 1 {
-		mErr = multierror.Append(mErr, errors.New("API list must have at least one entry"))
+		errs = append(errs, errors.New("API list must have at least one entry"))
 	}
 
 	// Add an error if the region has more than one API endpoint configured to
 	// be the default.
 	if numDefault > 1 {
-		mErr = multierror.Append(mErr, errors.New("API list can only have one default"))
+		errs = append(errs, errors.New("API list can only have one default"))
 	}
 
 	if r.Group == "" {
-		mErr = multierror.Append(mErr, errors.New("group cannot be empty"))
+		errs = append(errs, errors.New("group cannot be empty"))
 	}
 
 	// Perform a test generation of the Nomad client if we have at least one API
@@ -148,11 +147,11 @@ func (r *Region) Validate() error {
 	// use.
 	if len(r.API) > 0 {
 		if _, err := r.GenerateNomadClient(); err != nil {
-			mErr = multierror.Append(mErr, err)
+			errs = append(errs, err)
 		}
 	}
 
-	return mErr.ErrorOrNil()
+	return errors.Join(errs...)
 }
 
 // GenerateNomadClient is used to generate a new Nomad API client. The Nomad API

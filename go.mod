@@ -8,7 +8,6 @@ require (
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/hashicorp/go-cty-funcs v0.1.0
 	github.com/hashicorp/go-memdb v1.3.5
-	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-set/v3 v3.0.1
 	github.com/hashicorp/hcl/v2 v2.20.2-nomad-1
 	github.com/hashicorp/nomad v1.10.5
@@ -45,6 +44,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
