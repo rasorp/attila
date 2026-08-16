@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/nomad v1.10.5
 	github.com/hashicorp/nomad/api v0.0.0-20250610134639-76e3c2961a1a
 	github.com/oklog/ulid/v2 v2.1.2
-	github.com/rs/zerolog v1.34.0
+	github.com/rs/zerolog v1.35.1
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/shoenig/test v1.13.2
 	github.com/urfave/cli/v2 v2.27.7
