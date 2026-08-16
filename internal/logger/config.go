@@ -8,9 +8,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/helper/pointer"
+)
+
+const (
+	formatJSON  = "json"
+	formatHuman = "human"
 )
 
 type Config struct {
@@ -22,8 +27,8 @@ type Config struct {
 
 func DefaultConfig() *Config {
 	return &Config{
-		Level:       zerolog.LevelInfoValue,
-		Format:      "json",
+		Level:       zap.InfoLevel.String(),
+		Format:      formatJSON,
 		Colour:      pointer.Of(false),
 		IncludeLine: pointer.Of(false),
 	}
@@ -37,12 +42,12 @@ func (c *Config) Validate() error {
 
 	var errs []error
 
-	if _, err := zerolog.ParseLevel(strings.ToLower(c.Level)); err != nil {
+	if _, err := zap.ParseAtomicLevel(strings.ToLower(c.Level)); err != nil {
 		errs = append(errs, fmt.Errorf("failed to parse level: %w", err))
 	}
 
 	switch c.Format {
-	case "human", "json":
+	case formatHuman, formatJSON:
 	default:
 		errs = append(errs, fmt.Errorf("unsupported format: %q", c.Format))
 	}

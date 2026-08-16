@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-set/v3"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/logger"
 	storebackend "github.com/rasorp/attila/internal/store/backend"
@@ -75,7 +75,7 @@ func (h *HTTPConfig) Validate() error {
 	if len(h.Binds) < 1 {
 		errs = append(errs, errors.New("http bind address required"))
 	}
-	if _, err := zerolog.ParseLevel(strings.ToLower(h.AccessLogLevel)); err != nil {
+	if _, err := zap.ParseAtomicLevel(strings.ToLower(h.AccessLogLevel)); err != nil {
 		errs = append(errs, fmt.Errorf("failed to parse access log level: %w", err))
 	}
 
@@ -124,7 +124,7 @@ func DefaultConfig() *Config {
 		Log:   logger.DefaultConfig(),
 		State: storebackend.DefaultConfig(),
 		HTTP: &HTTPConfig{
-			AccessLogLevel: zerolog.LevelInfoValue,
+			AccessLogLevel: "info",
 			Binds: []*BindConfig{
 				{
 					Addr: "http://127.0.0.1:8080",

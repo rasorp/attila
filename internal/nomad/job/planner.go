@@ -9,7 +9,7 @@ import (
 
 	"github.com/expr-lang/expr"
 	"github.com/hashicorp/nomad/api"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
@@ -20,7 +20,7 @@ import (
 )
 
 type Planner struct {
-	logger zerolog.Logger
+	logger *zap.Logger
 
 	clients *client.Clients
 	job     *api.Job
@@ -35,15 +35,14 @@ type PlannerReq struct {
 	State   store.State
 }
 
-func NewPlanner(logger zerolog.Logger, req *PlannerReq) *Planner {
+func NewPlanner(logger *zap.Logger, req *PlannerReq) *Planner {
 	return &Planner{
 		clients: req.Clients,
 		job:     req.Job,
-		logger: logger.With().
-			Str("job_id", *req.Job.ID).
-			Str("job_namespace", *req.Job.Namespace).
-			Str("component", "job_register_planner").
-			Logger(),
+		logger: logger.With(
+			zap.String("job_id", *req.Job.ID),
+			zap.String("job_namespace", *req.Job.Namespace),
+		).Named("job_plan"),
 		plan:  domain.NewJobRegisterPlan(*req.Job.ID, *req.Job.Namespace),
 		state: req.State,
 	}
@@ -112,10 +111,11 @@ func (p *Planner) Run() (*domain.JobRegisterPlan, error) {
 // returns the set of regions selected for plan generation.
 func (p *Planner) runRegisterPlanPicker(
 	rule *domain.JobRegisterRule, regions []*domain.Region) ([]*domain.Region, error) {
-	p.logger.Debug().
-		Str("rule_name", rule.Name).
-		Int("num_regions", len(regions)).
-		Msg("performing execution of rule region picker")
+	p.logger.Debug(
+		"performing execution of rule region picker",
+		zap.String("rule_name", rule.Name),
+		zap.Int("num_regions", len(regions)),
+	)
 
 	if len(rule.RegionPickers) == 0 {
 		return regions, nil
@@ -181,7 +181,7 @@ func (p *Planner) generatePlanResult(ruleName string, regions []*domain.Region) 
 			return fmt.Errorf("failed to get Nomad client, %w", err)
 		}
 
-		// TODO(jrasell): add support for job plan diff.
+		// TODO(jrasem): add support for job plan diff.
 		planResp, _, err := nomadClient.Jobs().PlanOpts(p.job, nil, nil)
 		if err != nil {
 			return fmt.Errorf("failed to call Nomad job plan, %w", err)
@@ -189,10 +189,11 @@ func (p *Planner) generatePlanResult(ruleName string, regions []*domain.Region) 
 
 		p.plan.AddRegion(pickedRegion, planResp)
 
-		p.logger.Info().
-			Str("rule_name", ruleName).
-			Str("region_name", pickedRegion.Name).
-			Msg("region picked by rule picker")
+		p.logger.Info(
+			"region picked by rule picker",
+			zap.String("rule_name", ruleName),
+			zap.String("region_name", pickedRegion.Name),
+		)
 	}
 
 	return nil

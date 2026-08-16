@@ -8,19 +8,19 @@ import (
 	"sync"
 
 	"github.com/hashicorp/nomad/api"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 )
 
 type Clients struct {
-	logger zerolog.Logger
+	logger *zap.Logger
 
 	clients     map[string]*api.Client
 	clientsLock sync.RWMutex
 }
 
-func New(logger zerolog.Logger) *Clients {
+func New(logger *zap.Logger) *Clients {
 	return &Clients{
-		logger:  logger.With().Str("component", "nomad_client_handler").Logger(),
+		logger:  logger.Named("nomad_client"),
 		clients: make(map[string]*api.Client),
 	}
 }
@@ -29,7 +29,7 @@ func (c *Clients) Delete(name string) {
 	c.clientsLock.Lock()
 	delete(c.clients, name)
 	c.clientsLock.Unlock()
-	c.logger.Debug().Str("region_name", name).Msg("deleted Nomad regional client")
+	c.logger.Debug("deleted Nomad regional client", zap.String("region_name", name))
 }
 
 func (c *Clients) Get(name string) (*api.Client, error) {
@@ -55,5 +55,5 @@ func (c *Clients) Set(name string, client *api.Client) {
 	c.clients[name] = client
 	c.clientsLock.Unlock()
 
-	c.logger.Debug().Str("region_name", name).Msg("created Nomad regional client")
+	c.logger.Debug("created Nomad regional client", zap.String("region_name", name))
 }

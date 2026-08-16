@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/nomad/api"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/nomad/client"
 	"github.com/rasorp/attila/internal/server/nomad"
@@ -22,7 +22,7 @@ var defaultCollectionInterval = 1 * time.Minute
 type region struct {
 	name    string
 	clients *client.Clients
-	logger  zerolog.Logger
+	logger  *zap.Logger
 
 	// result stores the last fetched result of the region topology. All access
 	// should use the lock, as the object is concurrently written/read via a
@@ -34,11 +34,11 @@ type region struct {
 	shutdownCh chan struct{}
 }
 
-func newRegion(name string, clients *client.Clients, logger zerolog.Logger) *region {
+func newRegion(name string, clients *client.Clients, logger *zap.Logger) *region {
 	return &region{
 		name:       name,
 		clients:    clients,
-		logger:     logger.With().Str("region", name).Logger(),
+		logger:     logger.With(zap.String("region", name)),
 		shutdownCh: make(chan struct{}),
 	}
 }
@@ -67,9 +67,10 @@ func (r *region) run() {
 	// we populate the result.
 	r.runExecute()
 
-	r.logger.Info().
-		Dur("interval", defaultCollectionInterval).
-		Msg("starting periodic collector")
+	r.logger.Info(
+		"starting periodic collector",
+		zap.Int64("interval_ms", defaultCollectionInterval.Milliseconds()),
+	)
 
 	ticker := time.NewTicker(defaultCollectionInterval)
 	defer ticker.Stop()
@@ -79,7 +80,7 @@ func (r *region) run() {
 		case <-ticker.C:
 			r.runExecute()
 		case <-r.shutdownCh:
-			r.logger.Info().Msg("shutting down topology collector")
+			r.logger.Info("shutting down topology collector")
 			return
 		}
 	}
@@ -90,23 +91,23 @@ func (r *region) runExecute() {
 	// Track the start time, so we can monitor how long it takes for the
 	// collection to run.
 	startTime := time.Now()
-	r.logger.Info().Msg("performing execution of data collection")
+	r.logger.Info("performing execution of data collection")
 
 	apiClient, err := r.clients.Get(r.name)
 	if err != nil {
-		r.logger.Error().Err(err).Msg("failed to get API client")
+		r.logger.Error("failed to get API client", zap.Error(err))
 		return
 	}
 
 	result := nomad.NewTopology(r.name)
 
 	if err := r.executeAgentMembers(apiClient, result); err != nil {
-		r.logger.Error().Err(err).Msg("failed to process server topology")
+		r.logger.Error("failed to process server topology", zap.Error(err))
 		return
 	}
 
 	if err := r.executeNodes(apiClient, result); err != nil {
-		r.logger.Error().Err(err).Msg("failed to process node topology")
+		r.logger.Error("failed to process node topology", zap.Error(err))
 		return
 	}
 
@@ -114,9 +115,10 @@ func (r *region) runExecute() {
 	r.result = result
 	r.resultLock.Unlock()
 
-	r.logger.Info().
-		TimeDiff("dur", time.Now(), startTime).
-		Msg("finished execution of data collection")
+	r.logger.Info(
+		"finished execution of data collection",
+		zap.Int64("dur", int64(time.Since(startTime))),
+	)
 }
 
 func (r *region) executeAgentMembers(client *api.Client, result *nomad.Topology) error {

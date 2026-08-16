@@ -11,20 +11,20 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-func loggerMiddleware(logger zerolog.Logger, accessLevel string) func(next http.Handler) http.Handler {
+func loggerMiddleware(logger *zap.Logger, accessLevel string) func(next http.Handler) http.Handler {
 
-	var accessLoggerFn func() *zerolog.Event
-
+	var level zapcore.Level
 	switch accessLevel {
-	case zerolog.LevelTraceValue:
-		accessLoggerFn = logger.Trace
-	case zerolog.LevelDebugValue:
-		accessLoggerFn = logger.Debug
-	case zerolog.LevelInfoValue:
-		accessLoggerFn = logger.Info
+	case "trace":
+		level = zapcore.DebugLevel
+	case "debug":
+		level = zapcore.DebugLevel
+	case "info":
+		level = zapcore.InfoLevel
 	default:
 		panic(fmt.Sprintf("unsupported access log level: %q", accessLevel))
 	}
@@ -42,29 +42,31 @@ func loggerMiddleware(logger zerolog.Logger, accessLevel string) func(next http.
 				// this is available for debugging. Although the output is a
 				// little tricky to grok, it is very useful.
 				if rec := recover(); rec != nil {
-					logger.Error().
-						Interface("recover_info", rec).
-						Bytes("debug_stack", debug.Stack()).
-						Msg("panic during handling of HTTP request")
-
+					logger.Error(
+						"panic during handling of HTTP request",
+						zap.Any("recover_info", rec),
+						zap.ByteString("debug_stack", debug.Stack()),
+					)
 					http.Error(ww, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				}
 
-				accessLoggerFn().
-					Str("remote_address", r.RemoteAddr).
-					Str("path", r.URL.Path).
-					Str("proto", r.Proto).
-					Str("method", r.Method).
-					Str("user_agent", r.Header.Get("User-Agent")).
-					Int("status", ww.Status()).
-					Int64("latency_ns", int64(time.Since(startTime).Nanoseconds())).
-					Int("content_in_bytes", contentInBytes(r.Header)).
-					Int("content_out_bytes", ww.BytesWritten()).
-					Msg("successfully handled HTTP request")
+				// Check the log message would be written before writing out all the data.
+				if entry := logger.Check(level, "successfully handled HTTP request"); entry != nil {
+					entry.Write(
+						zap.String("remote_address", r.RemoteAddr),
+						zap.String("path", r.URL.Path),
+						zap.String("proto", r.Proto),
+						zap.String("method", r.Method),
+						zap.String("user_agent", r.Header.Get("User-Agent")),
+						zap.Int("status", ww.Status()),
+						zap.Int64("latency_ns", int64(time.Since(startTime).Nanoseconds())),
+						zap.Int("content_in_bytes", contentInBytes(r.Header)),
+						zap.Int("content_out_bytes", ww.BytesWritten()),
+					)
+				}
 			}()
 
 			next.ServeHTTP(ww, r)
-
 		}
 		return http.HandlerFunc(fn)
 	}

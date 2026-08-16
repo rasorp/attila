@@ -4,52 +4,68 @@
 package logger
 
 import (
-	"fmt"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-func New(cfg *Config) (*zerolog.Logger, error) {
+const (
+	timeKey = "timestamp"
+	nameKey = "component"
+)
 
-	// Parsing the log level is also performed when validating the config
-	// options, but it's easy enough to check. We don't need to add anything to
-	// the error, as the caller will handle wrapping it and it contains all the
-	// information needed already.
-	zerologLevel, err := zerolog.ParseLevel(strings.ToLower(cfg.Level))
+func New(cfg *Config) (*zap.Logger, error) {
+
+	// Zap does not sanitize the input string, so do that here to avoid
+	// case-sensetive config parameters.
+	logLevel, err := zap.ParseAtomicLevel(strings.ToLower(cfg.Level))
 	if err != nil {
 		return nil, err
 	}
 
-	// Generate the base logger which will include the timestamp and send all
-	// logs to stderr.
-	zerologLogger := zerolog.New(os.Stderr).
-		Level(zerologLevel).
-		With().Timestamp().
-		Logger()
+	var encoder zapcore.Encoder
 
-	// If the user specified human logging format, set the output accordingly.
-	// The default formatting of the timestamp and level is "8:46AM INF" which
-	// is not the best, so these are changed.
-	//
-	// The level format is chosen to given a consistent indentation to the logs
-	// which makes it easier to grok.
-	if cfg.Format == "human" {
-		zerologLogger = zerologLogger.Output(zerolog.ConsoleWriter{
-			FormatLevel: func(i any) string {
-				return strings.ToUpper(fmt.Sprintf("%-5s", i))
-			},
-			TimeFormat: time.RFC3339,
-			Out:        os.Stderr,
-			NoColor:    !*cfg.Colour,
-		})
+	switch cfg.Format {
+	case formatHuman:
+		encoder = newHumanEncoder(*cfg.Colour)
+	default:
+		encoder = newJSONEncoder()
 	}
+
+	// Accumulate our options; currently we only support adding the log line
+	// detail.
+	var opts []zap.Option
 
 	if *cfg.IncludeLine {
-		zerologLogger = zerologLogger.With().Caller().Logger()
+		opts = append(opts, zap.AddCaller())
 	}
 
-	return &zerologLogger, nil
+	return zap.New(zapcore.NewCore(encoder, os.Stderr, logLevel), opts...), nil
+}
+
+func newHumanEncoder(colour bool) zapcore.Encoder {
+
+	cfg := zap.NewProductionEncoderConfig()
+	cfg.TimeKey = timeKey
+	cfg.NameKey = nameKey
+	cfg.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	if colour {
+		cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	} else {
+		cfg.EncodeLevel = zapcore.CapitalLevelEncoder
+	}
+	return zapcore.NewConsoleEncoder(cfg)
+}
+
+func newJSONEncoder() zapcore.Encoder {
+
+	cfg := zap.NewProductionEncoderConfig()
+	cfg.TimeKey = timeKey
+	cfg.NameKey = nameKey
+	cfg.EncodeTime = zapcore.RFC3339NanoTimeEncoder
+
+	return zapcore.NewJSONEncoder(cfg)
 }
