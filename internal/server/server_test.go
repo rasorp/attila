@@ -8,7 +8,6 @@ import (
 
 	"github.com/shoenig/test/must"
 
-	"github.com/rasorp/attila/internal/helper/pointer"
 	"github.com/rasorp/attila/internal/helper/test/mock"
 	"github.com/rasorp/attila/internal/store"
 	storebackend "github.com/rasorp/attila/internal/store/backend"
@@ -19,7 +18,7 @@ func TestServer_restore(t *testing.T) {
 	cfg := DefaultConfig()
 
 	cfg.State.File = &storebackend.FileConfig{
-		Enable: pointer.Of(true),
+		Enable: new(true),
 		Path:   t.TempDir(),
 	}
 

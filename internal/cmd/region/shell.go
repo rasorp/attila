@@ -19,7 +19,6 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/rasorp/attila/internal/cmd/helper"
-	"github.com/rasorp/attila/internal/helper/pointer"
 	"github.com/rasorp/attila/pkg/api"
 )
 
@@ -130,7 +129,7 @@ func shellCommand() *cli.Command {
 
 			attachResp.Close()
 
-			if err := dockerClient.ContainerStop(ctx, resp.ID, container.StopOptions{Timeout: pointer.Of(0)}); err != nil {
+			if err := dockerClient.ContainerStop(ctx, resp.ID, container.StopOptions{Timeout: new(0)}); err != nil {
 				return cli.Exit(helper.FormatError("failed to run region shell", err), 1)
 			}
 			if err := dockerClient.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true}); err != nil {

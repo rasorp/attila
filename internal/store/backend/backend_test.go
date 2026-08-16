@@ -8,8 +8,6 @@ import (
 	"testing"
 
 	"github.com/shoenig/test/must"
-
-	"github.com/rasorp/attila/internal/helper/pointer"
 )
 
 func TestNewBackend(t *testing.T) {
@@ -22,7 +20,7 @@ func TestNewBackend(t *testing.T) {
 		{
 			name: "memory backend",
 			inputConfig: &Config{
-				Memory: &MemoryConfig{Enable: pointer.Of(true)},
+				Memory: &MemoryConfig{Enable: new(true)},
 			},
 			expectedError: nil,
 			expectedName:  "mem",
@@ -31,7 +29,7 @@ func TestNewBackend(t *testing.T) {
 			name: "file backend",
 			inputConfig: &Config{
 				File: &FileConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 			},
 			expectedError: nil,

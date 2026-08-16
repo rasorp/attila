@@ -8,8 +8,6 @@ import (
 	"testing"
 
 	"github.com/shoenig/test/must"
-
-	"github.com/rasorp/attila/internal/helper/pointer"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -35,7 +33,7 @@ func TestConfig_Validate(t *testing.T) {
 			name: "memory enabled",
 			inputConfig: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 			},
 			expectedError: nil,
@@ -44,10 +42,10 @@ func TestConfig_Validate(t *testing.T) {
 			name: "no backend enabled",
 			inputConfig: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(false),
+					Enable: new(false),
 				},
 				File: &FileConfig{
-					Enable: pointer.Of(false),
+					Enable: new(false),
 				},
 			},
 			expectedError: errors.New("no state backend enabled"),
@@ -56,10 +54,10 @@ func TestConfig_Validate(t *testing.T) {
 			name: "all backends enabled",
 			inputConfig: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 				File: &FileConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 			},
 			expectedError: errors.New("only one storage backend can be enabled"),
@@ -98,12 +96,12 @@ func TestConfig_Merge(t *testing.T) {
 			inputConfig: nil,
 			mergeConfig: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 			},
 			expectedOutput: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 			},
 		},
@@ -111,13 +109,13 @@ func TestConfig_Merge(t *testing.T) {
 			name: "merge nil",
 			inputConfig: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 			},
 			mergeConfig: nil,
 			expectedOutput: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 			},
 		},
@@ -125,28 +123,28 @@ func TestConfig_Merge(t *testing.T) {
 			name: "full merge",
 			inputConfig: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(false),
+					Enable: new(false),
 				},
 				File: &FileConfig{
-					Enable: pointer.Of(false),
+					Enable: new(false),
 					Path:   "/my/path",
 				},
 			},
 			mergeConfig: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 				File: &FileConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 					Path:   "/my/new/path",
 				},
 			},
 			expectedOutput: &Config{
 				Memory: &MemoryConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 				},
 				File: &FileConfig{
-					Enable: pointer.Of(true),
+					Enable: new(true),
 					Path:   "/my/new/path",
 				},
 			},
@@ -179,12 +177,12 @@ func TestMemoryConfig_Enabled(t *testing.T) {
 		},
 		{
 			name:              "enabled false",
-			inputMemoryConfig: &MemoryConfig{Enable: pointer.Of(false)},
+			inputMemoryConfig: &MemoryConfig{Enable: new(false)},
 			expectedOutput:    false,
 		},
 		{
 			name:              "enabled true",
-			inputMemoryConfig: &MemoryConfig{Enable: pointer.Of(true)},
+			inputMemoryConfig: &MemoryConfig{Enable: new(true)},
 			expectedOutput:    true,
 		},
 	}
@@ -215,12 +213,12 @@ func TestFileConfig_Enabled(t *testing.T) {
 		},
 		{
 			name:            "enabled false",
-			inputFileConfig: &FileConfig{Enable: pointer.Of(false)},
+			inputFileConfig: &FileConfig{Enable: new(false)},
 			expectedOutput:  false,
 		},
 		{
 			name:            "enabled true",
-			inputFileConfig: &FileConfig{Enable: pointer.Of(true)},
+			inputFileConfig: &FileConfig{Enable: new(true)},
 			expectedOutput:  true,
 		},
 	}
@@ -242,14 +240,14 @@ func TestFileConfig_Validate(t *testing.T) {
 		{
 			name: "not enabled",
 			inputFileConfig: &FileConfig{
-				Enable: pointer.Of(false),
+				Enable: new(false),
 			},
 			expectedError: false,
 		},
 		{
 			name: "empty path",
 			inputFileConfig: &FileConfig{
-				Enable: pointer.Of(true),
+				Enable: new(true),
 				Path:   "",
 			},
 			expectedError: true,
@@ -257,7 +255,7 @@ func TestFileConfig_Validate(t *testing.T) {
 		{
 			name: "not absolute path",
 			inputFileConfig: &FileConfig{
-				Enable: pointer.Of(true),
+				Enable: new(true),
 				Path:   "~/jrasell",
 			},
 			expectedError: true,
@@ -265,7 +263,7 @@ func TestFileConfig_Validate(t *testing.T) {
 		{
 			name: "non-existent path",
 			inputFileConfig: &FileConfig{
-				Enable: pointer.Of(true),
+				Enable: new(true),
 				Path:   "/jrasell/data",
 			},
 			expectedError: true,

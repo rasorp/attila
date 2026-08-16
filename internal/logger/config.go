@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"go.uber.org/zap"
-
-	"github.com/rasorp/attila/internal/helper/pointer"
 )
 
 const (
@@ -29,8 +27,8 @@ func DefaultConfig() *Config {
 	return &Config{
 		Level:       zap.InfoLevel.String(),
 		Format:      formatJSON,
-		Colour:      pointer.Of(false),
-		IncludeLine: pointer.Of(false),
+		Colour:      new(false),
+		IncludeLine: new(false),
 	}
 }
 
