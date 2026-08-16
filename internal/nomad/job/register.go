@@ -4,9 +4,10 @@
 package job
 
 import (
+	"go.uber.org/zap"
+
 	"github.com/hashicorp/nomad/api"
 	"github.com/oklog/ulid/v2"
-	"github.com/rs/zerolog"
 
 	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
@@ -14,7 +15,7 @@ import (
 )
 
 type Register struct {
-	logger zerolog.Logger
+	logger *zap.Logger
 
 	clients *client.Clients
 	job     *api.Job
@@ -31,15 +32,15 @@ type RegisterReq struct {
 	State   store.State
 }
 
-func NewRegister(logger zerolog.Logger, req *RegisterReq) *Register {
+func NewRegister(logger *zap.Logger, req *RegisterReq) *Register {
 	return &Register{
 		clients: req.Clients,
 		job:     req.Job,
-		logger: logger.With().
-			Str("job_id", *req.Job.ID).
-			Str("job_namespace", *req.Job.Namespace).
-			Str("plan_id", req.PlanID.String()).
-			Str("component", "job_register_runner").Logger(),
+		logger: logger.With(
+			zap.String("job_id", *req.Job.ID),
+			zap.String("job_namespace", *req.Job.Namespace),
+			zap.String("plan_id", req.PlanID.String()),
+		).Named("job_register"),
 		planID:    req.PlanID,
 		runResult: domain.NewJobRegisterPlanRun(*req.Job.ID, *req.Job.Namespace),
 		state:     req.State,
@@ -72,27 +73,30 @@ func (r *Register) runPlannedRegion(regionPlan *domain.JobRegisterRegionPlan) er
 		ModifyIndex:  regionPlan.Plan.JobModifyIndex,
 	}
 
-	r.logger.Info().
-		Str("region_name", regionPlan.Region).
-		Uint64("job_modify_index", registerOpts.ModifyIndex).
-		Msg("regional job register started")
+	r.logger.Info(
+		"regional job register started",
+		zap.String("region_name", regionPlan.Region),
+		zap.Uint64("job_modify_index", registerOpts.ModifyIndex),
+	)
 
 	registerResp, _, err := apiClient.Jobs().RegisterOpts(r.job, &registerOpts, nil)
 	r.runResult.AddRegion(regionPlan.Region, registerResp, err)
 
 	if err != nil {
-		r.logger.Error().
-			Err(err).
-			Str("region_name", regionPlan.Region).
-			Uint64("job_modify_index", registerOpts.ModifyIndex).
-			Msg("regional job register failed")
+		r.logger.Error(
+			"regional job register failed",
+			zap.String("region_name", regionPlan.Region),
+			zap.Uint64("job_modify_index", registerOpts.ModifyIndex),
+			zap.Error(err),
+		)
 		return err
 	}
 
-	r.logger.Info().
-		Str("region_name", regionPlan.Region).
-		Uint64("job_modify_index", registerOpts.ModifyIndex).
-		Msg("regional job register successful")
+	r.logger.Info(
+		"regional job register successful",
+		zap.String("region_name", regionPlan.Region),
+		zap.Uint64("job_modify_index", registerOpts.ModifyIndex),
+	)
 
 	return nil
 }

@@ -7,13 +7,13 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/server/nomad"
 	"github.com/rasorp/attila/internal/store"
 )
 
-func NewRouter(logger zerolog.Logger, accessLevel string, stateStore store.State, nomadController nomad.Controller) *chi.Mux {
+func NewRouter(logger *zap.Logger, accessLevel string, stateStore store.State, nomadController nomad.Controller) *chi.Mux {
 
 	r := chi.NewRouter()
 	r.Use(loggerMiddleware(logger, accessLevel))
@@ -38,7 +38,7 @@ func NewRouter(logger zerolog.Logger, accessLevel string, stateStore store.State
 	return r
 }
 
-func jobRouter(logger zerolog.Logger, stateStore store.State, nomadController nomad.Controller) http.Handler {
+func jobRouter(logger *zap.Logger, stateStore store.State, nomadController nomad.Controller) http.Handler {
 	r := chi.NewRouter()
 
 	r.Mount("/register/methods", jobsRegisterMethodsEndpoint{

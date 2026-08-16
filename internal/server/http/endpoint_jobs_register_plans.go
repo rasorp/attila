@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/hashicorp/nomad/api"
 	"github.com/oklog/ulid/v2"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/server/nomad"
@@ -54,7 +54,7 @@ type JobsRegisterPlansRunResp struct {
 }
 
 type jobsRegisterPlansEndpoint struct {
-	logger          zerolog.Logger
+	logger          *zap.Logger
 	nomadController nomad.Controller
 	state           store.State
 }
@@ -176,7 +176,7 @@ func (j jobsRegisterPlansEndpoint) run(w http.ResponseWriter, r *http.Request) {
 	stateReq := store.JobRegisterPlanDeleteReq{ID: planID}
 
 	if _, err := j.state.JobRegister().Plan().Delete(&stateReq); err != nil {
-		j.logger.Err(err).Msg("failed to delete job register plan")
+		j.logger.Error("failed to delete job register plan", zap.Error(err))
 	}
 
 	httpWriteResponse(w, &JobsRegisterPlansRunResp{

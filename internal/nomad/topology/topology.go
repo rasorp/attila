@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/hashicorp/nomad/api"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/nomad/client"
 	"github.com/rasorp/attila/internal/server/nomad"
@@ -15,7 +15,7 @@ import (
 
 type Topology struct {
 	clients *client.Clients
-	logger  zerolog.Logger
+	logger  *zap.Logger
 
 	// regions stores the topology collector for the named region. Access should
 	// use the lock for concurrent safety.
@@ -23,10 +23,10 @@ type Topology struct {
 	regionsLock sync.RWMutex
 }
 
-func New(logger *zerolog.Logger, clients *client.Clients) nomad.TopologyController {
+func New(logger *zap.Logger, clients *client.Clients) nomad.TopologyController {
 	return &Topology{
 		clients: clients,
-		logger:  logger.With().Str("component", "topology").Logger(),
+		logger:  logger.Named("region_topology"),
 		regions: make(map[string]*region),
 	}
 }

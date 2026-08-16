@@ -6,7 +6,7 @@ package nomad
 import (
 	"github.com/hashicorp/nomad/api"
 	"github.com/oklog/ulid/v2"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
@@ -17,13 +17,13 @@ import (
 )
 
 type Controller struct {
-	logger   *zerolog.Logger
+	logger   *zap.Logger
 	clients  *client.Clients
 	topology nomad.TopologyController
 }
 
-func NewController(logger *zerolog.Logger) nomad.Controller {
-	clientStore := client.New(*logger)
+func NewController(logger *zap.Logger) nomad.Controller {
+	clientStore := client.New(logger)
 	topologyController := topology.New(logger, clientStore)
 
 	return &Controller{
@@ -46,7 +46,7 @@ func (c *Controller) RegionSet(name string, client *api.Client) {
 func (c *Controller) RegionNum() int { return c.clients.Num() }
 
 func (c *Controller) JobRegistrationPlanCreate(apiJob *api.Job, state store.State) (*domain.JobRegisterPlan, error) {
-	return job.NewPlanner(*c.logger, &job.PlannerReq{
+	return job.NewPlanner(c.logger, &job.PlannerReq{
 		Clients: c.clients,
 		Job:     apiJob,
 		State:   state,
@@ -54,7 +54,7 @@ func (c *Controller) JobRegistrationPlanCreate(apiJob *api.Job, state store.Stat
 }
 
 func (c *Controller) JobRegistrationRun(planID ulid.ULID, apiJob *api.Job, state store.State) (*domain.JobRegisterPlanRun, error) {
-	return job.NewRegister(*c.logger, &job.RegisterReq{
+	return job.NewRegister(c.logger, &job.RegisterReq{
 		Clients: c.clients,
 		Job:     apiJob,
 		PlanID:  planID,

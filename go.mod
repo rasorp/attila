@@ -13,12 +13,12 @@ require (
 	github.com/hashicorp/nomad v1.10.5
 	github.com/hashicorp/nomad/api v0.0.0-20250610134639-76e3c2961a1a
 	github.com/oklog/ulid/v2 v2.1.2
-	github.com/rs/zerolog v1.35.1
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/shoenig/test v1.13.2
 	github.com/urfave/cli/v2 v2.27.7
 	github.com/zclconf/go-cty v1.19.0
 	github.com/zclconf/go-cty-yaml v1.2.0
+	go.uber.org/zap v1.28.0
 )
 
 require (
@@ -69,6 +69,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.30.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20250711185948-6ae5c78190dc // indirect

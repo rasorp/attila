@@ -15,9 +15,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/zerolog"
+	"go.uber.org/zap"
 
-	"github.com/rasorp/attila/internal/helper/pointer"
 	"github.com/rasorp/attila/internal/logger"
 	nomadControler "github.com/rasorp/attila/internal/nomad"
 	serverHTTP "github.com/rasorp/attila/internal/server/http"
@@ -27,8 +26,8 @@ import (
 )
 
 type Server struct {
-	baseLogger   *zerolog.Logger
-	serverLogger *zerolog.Logger
+	baseLogger   *zap.Logger
+	serverLogger *zap.Logger
 	srvs         []*httpServer
 	state        store.State
 
@@ -37,7 +36,7 @@ type Server struct {
 }
 
 type httpServer struct {
-	logger *zerolog.Logger
+	logger *zap.Logger
 	ln     net.Listener
 	mux    *chi.Mux
 	server *http.Server
@@ -45,7 +44,7 @@ type httpServer struct {
 
 func NewServer(cfg *Config) (*Server, error) {
 
-	zerologger, err := logger.New(cfg.Log)
+	baseLogger, err := logger.New(cfg.Log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
@@ -56,13 +55,13 @@ func NewServer(cfg *Config) (*Server, error) {
 	}
 
 	server := Server{
-		baseLogger:      zerologger,
-		serverLogger:    pointer.Of(zerologger.With().Str("component", "server").Logger()),
+		baseLogger:      baseLogger,
+		serverLogger:    baseLogger.Named("server"),
 		state:           backend,
-		nomadController: nomadControler.NewController(zerologger),
+		nomadController: nomadControler.NewController(baseLogger),
 	}
 
-	server.serverLogger.Info().Msg("successfully setup state backend")
+	server.serverLogger.Info("successfully setup state backend")
 
 	if err := server.restore(); err != nil {
 		return nil, fmt.Errorf("failed to perform server restore: %w", err)
@@ -70,11 +69,12 @@ func NewServer(cfg *Config) (*Server, error) {
 
 	for _, bind := range cfg.HTTP.Binds {
 
-		serverLogger := server.serverLogger.With().
-			Str("address", bind.Addr).Logger()
+		serverLogger := server.serverLogger.With(
+			zap.String("address", bind.Addr),
+		)
 
 		srv := httpServer{
-			logger: &serverLogger,
+			logger: serverLogger,
 			mux:    serverHTTP.NewRouter(serverLogger, cfg.HTTP.AccessLogLevel, backend, server.nomadController),
 		}
 
@@ -105,7 +105,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		srv.ln = ln
 
 		server.srvs = append(server.srvs, &srv)
-		serverLogger.Info().Msg("successfully setup HTTP server")
+		serverLogger.Info("successfully setup HTTP server")
 	}
 
 	return &server, nil
@@ -130,9 +130,11 @@ func (s *Server) restore() error {
 
 		apiClient, err := region.GenerateNomadClient()
 		if err != nil {
-			s.serverLogger.Err(err).
-				Str("region_name", region.Name).
-				Msg("failed to restore region client")
+			s.serverLogger.Error(
+				"failed to restore region client",
+				zap.String("region_name", region.Name),
+				zap.Error(err),
+			)
 			continue
 		}
 
@@ -147,7 +149,7 @@ func (s *Server) restore() error {
 // be stopped by calling the Stop function.
 func (s *Server) Start() {
 	for _, srv := range s.srvs {
-		srv.logger.Info().Msg("server now listening for connections")
+		srv.logger.Info("server now listening for connections")
 		go func() {
 			_ = srv.server.Serve(srv.ln)
 		}()
@@ -161,9 +163,9 @@ func (s *Server) Stop() {
 
 	for _, srv := range s.srvs {
 		if err := srv.server.Shutdown(ctx); err != nil {
-			srv.logger.Error().Err(err).Msg("failed to gracefully shutdown HTTP server")
+			srv.logger.Error("failed to gracefully shutdown HTTP server", zap.Error(err))
 		} else {
-			srv.logger.Info().Msg("successfully shutdown HTTP server")
+			srv.logger.Info("successfully shutdown HTTP server")
 		}
 
 		_ = srv.ln.Close()
@@ -177,10 +179,10 @@ func (s *Server) WaitForSignals() {
 
 	// Wait to receive a signal. This blocks until we are notified.
 	for {
-		s.serverLogger.Debug().Msg("wait for signal handler started")
+		s.serverLogger.Debug("wait for signal handler started")
 
 		sig := <-signalCh
-		s.serverLogger.Info().Str("signal", sig.String()).Msg("received signal")
+		s.serverLogger.Info("received signal", zap.String("signal", sig.String()))
 
 		// Check the signal we received. If it was a SIGHUP when the
 		// functionality is added, we perform the reload tasks and then
