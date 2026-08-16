@@ -17,9 +17,11 @@ require (
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/shoenig/test v1.13.2
 	github.com/urfave/cli/v2 v2.27.7
-	github.com/zclconf/go-cty v1.17.0
+	github.com/zclconf/go-cty v1.19.0
 	github.com/zclconf/go-cty-yaml v1.2.0
 )
+
+require github.com/apparentlymart/go-textseg/v17 v17.0.1 // indirect
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
