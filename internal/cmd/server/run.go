@@ -9,7 +9,7 @@ import (
 	"github.com/rasorp/attila/internal/cmd/helper"
 	"github.com/rasorp/attila/internal/helper/file"
 	"github.com/rasorp/attila/internal/server"
-	"github.com/rasorp/attila/internal/state"
+	storebackend "github.com/rasorp/attila/internal/store/backend"
 )
 
 func runCommand() *cli.Command {
@@ -133,11 +133,11 @@ func generateRunConfig(cliCtx *cli.Context) (*server.Config, error) {
 	}
 
 	if memoryState := cliCtx.Bool("state-memory-enabled"); memoryState {
-		defaultCfg.State.Memory = &state.MemoryConfig{Enable: &memoryState}
+		defaultCfg.State.Memory = &storebackend.MemoryConfig{Enable: &memoryState}
 	}
 
 	if fileState := cliCtx.Bool("state-file-enabled"); fileState {
-		defaultCfg.State.File = &state.FileConfig{
+		defaultCfg.State.File = &storebackend.FileConfig{
 			Enable: &fileState,
 			Path:   cliCtx.String("state-file-path"),
 		}

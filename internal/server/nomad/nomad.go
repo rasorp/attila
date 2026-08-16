@@ -7,7 +7,8 @@ import (
 	"github.com/hashicorp/nomad/api"
 	"github.com/oklog/ulid/v2"
 
-	"github.com/rasorp/attila/internal/server/state"
+	"github.com/rasorp/attila/internal/domain"
+	"github.com/rasorp/attila/internal/store"
 )
 
 // Controller
@@ -15,10 +16,10 @@ type Controller interface {
 	ClientController
 
 	// JobRegistrationPlanCreate
-	JobRegistrationPlanCreate(job *api.Job, state state.State) (*state.JobRegisterPlan, error)
+	JobRegistrationPlanCreate(job *api.Job, store store.State) (*domain.JobRegisterPlan, error)
 
 	// JobRegistrationRun
-	JobRegistrationRun(planID ulid.ULID, job *api.Job, state state.State) (*state.JobRegisterPlanRun, error)
+	JobRegistrationRun(planID ulid.ULID, job *api.Job, store store.State) (*domain.JobRegisterPlanRun, error)
 
 	TopologyController
 }

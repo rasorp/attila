@@ -8,11 +8,12 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog"
 
+	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
 	"github.com/rasorp/attila/internal/nomad/job"
 	"github.com/rasorp/attila/internal/nomad/topology"
 	"github.com/rasorp/attila/internal/server/nomad"
-	"github.com/rasorp/attila/internal/server/state"
+	"github.com/rasorp/attila/internal/store"
 )
 
 type Controller struct {
@@ -22,7 +23,6 @@ type Controller struct {
 }
 
 func NewController(logger *zerolog.Logger) nomad.Controller {
-
 	clientStore := client.New(*logger)
 	topologyController := topology.New(logger, clientStore)
 
@@ -45,7 +45,7 @@ func (c *Controller) RegionSet(name string, client *api.Client) {
 
 func (c *Controller) RegionNum() int { return c.clients.Num() }
 
-func (c *Controller) JobRegistrationPlanCreate(apiJob *api.Job, state state.State) (*state.JobRegisterPlan, error) {
+func (c *Controller) JobRegistrationPlanCreate(apiJob *api.Job, state store.State) (*domain.JobRegisterPlan, error) {
 	return job.NewPlanner(*c.logger, &job.PlannerReq{
 		Clients: c.clients,
 		Job:     apiJob,
@@ -53,7 +53,7 @@ func (c *Controller) JobRegistrationPlanCreate(apiJob *api.Job, state state.Stat
 	}).Run()
 }
 
-func (c *Controller) JobRegistrationRun(planID ulid.ULID, apiJob *api.Job, state state.State) (*state.JobRegisterPlanRun, error) {
+func (c *Controller) JobRegistrationRun(planID ulid.ULID, apiJob *api.Job, state store.State) (*domain.JobRegisterPlanRun, error) {
 	return job.NewRegister(*c.logger, &job.RegisterReq{
 		Clients: c.clients,
 		Job:     apiJob,

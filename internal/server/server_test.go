@@ -10,15 +10,15 @@ import (
 
 	"github.com/rasorp/attila/internal/helper/pointer"
 	"github.com/rasorp/attila/internal/helper/test/mock"
-	"github.com/rasorp/attila/internal/server/state"
-	store "github.com/rasorp/attila/internal/state"
+	"github.com/rasorp/attila/internal/store"
+	storebackend "github.com/rasorp/attila/internal/store/backend"
 )
 
 func TestServer_restore(t *testing.T) {
 
 	cfg := DefaultConfig()
 
-	cfg.State.File = &store.FileConfig{
+	cfg.State.File = &storebackend.FileConfig{
 		Enable: pointer.Of(true),
 		Path:   t.TempDir(),
 	}
@@ -29,9 +29,7 @@ func TestServer_restore(t *testing.T) {
 	must.NoError(t, err)
 	must.NotNil(t, startServer)
 
-	_, err = startServer.state.Region().Create(
-		&state.RegionCreateReq{Region: mock.Region()},
-	)
+	_, err = startServer.state.Region().Create(&store.RegionCreateReq{Region: mock.Region()})
 	must.Nil(t, err)
 
 	// Stop the server, so we can free the listener.

@@ -12,11 +12,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/rasorp/attila/internal/server/state"
+	"github.com/rasorp/attila/internal/domain"
+	"github.com/rasorp/attila/internal/store"
 )
 
 type JobRegisterMethodCreateResp struct {
-	Method               *state.JobRegisterMethod `json:"method"`
+	Method               *domain.JobRegisterMethod `json:"method"`
 	internalResponseMeta `json:"-"`
 }
 
@@ -25,17 +26,17 @@ type JobRegisterMethodDeleteResp struct {
 }
 
 type JobRegisterMethodGetResp struct {
-	Method               *state.JobRegisterMethod `json:"method"`
+	Method               *domain.JobRegisterMethod `json:"method"`
 	internalResponseMeta `json:"-"`
 }
 
 type JobRegisterMethodListResp struct {
-	Methods              []*state.JobRegisterMethodStub `json:"methods"`
+	Methods              []*domain.JobRegisterMethodStub `json:"methods"`
 	internalResponseMeta `json:"-"`
 }
 
 type jobsRegisterMethodsEndpoint struct {
-	state state.State
+	state store.State
 }
 
 func (j jobsRegisterMethodsEndpoint) routes() chi.Router {
@@ -58,11 +59,10 @@ func (j jobsRegisterMethodsEndpoint) routes() chi.Router {
 }
 
 func (j jobsRegisterMethodsEndpoint) create(w http.ResponseWriter, r *http.Request) {
-
-	var methodObj state.JobRegisterMethod
+	var methodObj domain.JobRegisterMethod
 
 	if err := json.NewDecoder(r.Body).Decode(&methodObj); err != nil {
-		httpWriteResponseError(w, NewResponseError(fmt.Errorf("failed to decode object: %w", err), 400))
+		httpWriteResponseError(w, NewResponseError(fmt.Errorf("failed to decode object: %w", err), http.StatusBadRequest))
 		return
 	}
 
@@ -72,9 +72,9 @@ func (j jobsRegisterMethodsEndpoint) create(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	methodObj.Metadata = state.NewMetadata()
+	methodObj.Metadata = domain.NewMetadata()
 
-	stateReq := state.JobRegisterMethodCreateReq{Method: &methodObj}
+	stateReq := store.JobRegisterMethodCreateReq{Method: &methodObj}
 
 	methodCreateResp, err := j.state.JobRegister().Method().Create(&stateReq)
 	if err != nil {
@@ -92,7 +92,7 @@ func (j jobsRegisterMethodsEndpoint) create(w http.ResponseWriter, r *http.Reque
 func (j jobsRegisterMethodsEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 	methodName := r.Context().Value("method-name").(string)
 
-	stateReq := state.JobRegisterMethodDeleteReq{Name: methodName}
+	stateReq := store.JobRegisterMethodDeleteReq{Name: methodName}
 
 	_, err := j.state.JobRegister().Method().Delete(&stateReq)
 	if err != nil {
@@ -109,7 +109,7 @@ func (j jobsRegisterMethodsEndpoint) delete(w http.ResponseWriter, r *http.Reque
 func (a jobsRegisterMethodsEndpoint) get(w http.ResponseWriter, r *http.Request) {
 	methodName := r.Context().Value("method-name").(string)
 
-	stateReq := state.JobRegisterMethodGetReq{Name: methodName}
+	stateReq := store.JobRegisterMethodGetReq{Name: methodName}
 
 	methodGetResp, err := a.state.JobRegister().Method().Get(&stateReq)
 	if err != nil {
@@ -125,13 +125,13 @@ func (a jobsRegisterMethodsEndpoint) get(w http.ResponseWriter, r *http.Request)
 }
 
 func (j jobsRegisterMethodsEndpoint) list(w http.ResponseWriter, r *http.Request) {
-	stateResp, err := j.state.JobRegister().Method().List(&state.JobRegisterMethodListReq{})
+	stateResp, err := j.state.JobRegister().Method().List(&store.JobRegisterMethodListReq{})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
 	} else {
 		resp := JobRegisterMethodListResp{
-			Methods:              make([]*state.JobRegisterMethodStub, len(stateResp.Methods)),
+			Methods:              make([]*domain.JobRegisterMethodStub, len(stateResp.Methods)),
 			internalResponseMeta: newInternalResponseMeta(http.StatusOK),
 		}
 

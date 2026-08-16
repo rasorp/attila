@@ -1,6 +1,6 @@
-name     = "platform_namespace"
+name     = "europe-platform"
 selector = "Namespace == \"platform\""
 
 rule {
-  name = "platform_namespace"
+  name = "europe-platform"
 }

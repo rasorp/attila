@@ -15,8 +15,9 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog"
 
+	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/server/nomad"
-	"github.com/rasorp/attila/internal/server/state"
+	"github.com/rasorp/attila/internal/store"
 )
 
 type JobsRegisterPlansCreateReq struct {
@@ -24,7 +25,7 @@ type JobsRegisterPlansCreateReq struct {
 }
 
 type JobsRegisterPlansCreateResp struct {
-	Plan                 *state.JobRegisterPlan `json:"plan"`
+	Plan                 *domain.JobRegisterPlan `json:"plan"`
 	internalResponseMeta `json:"-"`
 }
 
@@ -33,12 +34,12 @@ type JobsRegisterPlansDeleteResp struct {
 }
 
 type JobsRegisterPlansGetResp struct {
-	Plan                 *state.JobRegisterPlan `json:"plan"`
+	Plan                 *domain.JobRegisterPlan `json:"plan"`
 	internalResponseMeta `json:"-"`
 }
 
 type JobsRegisterPlansListResp struct {
-	Plans                []*state.JobRegisterPlan `json:"plans"`
+	Plans                []*domain.JobRegisterPlan `json:"plans"`
 	internalResponseMeta `json:"-"`
 }
 
@@ -47,15 +48,15 @@ type JobsRegisterPlansRunReq struct {
 }
 
 type JobsRegisterPlansRunResp struct {
-	Run                  *state.JobRegisterPlanRun `json:"run"`
-	PatrialFailureError  error                     `json:"partial_failure_error"`
+	Run                  *domain.JobRegisterPlanRun `json:"run"`
+	PatrialFailureError  error                      `json:"partial_failure_error"`
 	internalResponseMeta `json:"-"`
 }
 
 type jobsRegisterPlansEndpoint struct {
 	logger          zerolog.Logger
 	nomadController nomad.Controller
-	state           state.State
+	state           store.State
 }
 
 func (j jobsRegisterPlansEndpoint) routes() chi.Router {
@@ -79,7 +80,6 @@ func (j jobsRegisterPlansEndpoint) routes() chi.Router {
 }
 
 func (j jobsRegisterPlansEndpoint) create(w http.ResponseWriter, r *http.Request) {
-
 	var req JobsRegisterPlansCreateReq
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -94,9 +94,9 @@ func (j jobsRegisterPlansEndpoint) create(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	stateResp, errr := j.state.JobRegister().Plan().Create(&state.JobRegisterPlanCreateReq{Plan: controllerResp})
-	if errr != nil {
-		httpWriteResponseError(w, NewResponseError(err, http.StatusInternalServerError))
+	stateResp, stateErr := j.state.JobRegister().Plan().Create(&store.JobRegisterPlanCreateReq{Plan: controllerResp})
+	if stateErr != nil {
+		httpWriteResponseError(w, NewResponseError(stateErr.Err(), stateErr.StatusCode()))
 		return
 	}
 
@@ -109,7 +109,7 @@ func (j jobsRegisterPlansEndpoint) create(w http.ResponseWriter, r *http.Request
 func (j jobsRegisterPlansEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 	planID := r.Context().Value("id").(ulid.ULID)
 
-	stateReq := state.JobRegisterPlanDeleteReq{ID: planID}
+	stateReq := store.JobRegisterPlanDeleteReq{ID: planID}
 
 	_, err := j.state.JobRegister().Plan().Delete(&stateReq)
 	if err != nil {
@@ -124,7 +124,7 @@ func (j jobsRegisterPlansEndpoint) delete(w http.ResponseWriter, r *http.Request
 func (j jobsRegisterPlansEndpoint) get(w http.ResponseWriter, r *http.Request) {
 	planID := r.Context().Value("id").(ulid.ULID)
 
-	stateReq := state.JobRegisterPlanGetReq{ID: planID}
+	stateReq := store.JobRegisterPlanGetReq{ID: planID}
 
 	stateResp, err := j.state.JobRegister().Plan().Get(&stateReq)
 	if err != nil {
@@ -138,7 +138,7 @@ func (j jobsRegisterPlansEndpoint) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (j jobsRegisterPlansEndpoint) list(w http.ResponseWriter, r *http.Request) {
-	stateResp, err := j.state.JobRegister().Plan().List(&state.JobRegisterPlanListReq{})
+	stateResp, err := j.state.JobRegister().Plan().List(&store.JobRegisterPlanListReq{})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
@@ -152,7 +152,6 @@ func (j jobsRegisterPlansEndpoint) list(w http.ResponseWriter, r *http.Request) 
 }
 
 func (j jobsRegisterPlansEndpoint) run(w http.ResponseWriter, r *http.Request) {
-
 	var httpReq JobsRegisterPlansRunReq
 
 	if err := json.NewDecoder(r.Body).Decode(&httpReq); err != nil {
@@ -174,7 +173,7 @@ func (j jobsRegisterPlansEndpoint) run(w http.ResponseWriter, r *http.Request) {
 		responseCode = http.StatusInternalServerError
 	}
 
-	stateReq := state.JobRegisterPlanDeleteReq{ID: planID}
+	stateReq := store.JobRegisterPlanDeleteReq{ID: planID}
 
 	if _, err := j.state.JobRegister().Plan().Delete(&stateReq); err != nil {
 		j.logger.Err(err).Msg("failed to delete job register plan")
