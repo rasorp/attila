@@ -22,15 +22,15 @@ import (
 	nomadControler "github.com/rasorp/attila/internal/nomad"
 	serverHTTP "github.com/rasorp/attila/internal/server/http"
 	"github.com/rasorp/attila/internal/server/nomad"
-	"github.com/rasorp/attila/internal/server/state"
-	stateBackend "github.com/rasorp/attila/internal/state"
+	"github.com/rasorp/attila/internal/store"
+	storebackend "github.com/rasorp/attila/internal/store/backend"
 )
 
 type Server struct {
 	baseLogger   *zerolog.Logger
 	serverLogger *zerolog.Logger
 	srvs         []*httpServer
-	state        state.State
+	state        store.State
 
 	// nomadController
 	nomadController nomad.Controller
@@ -50,7 +50,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
 
-	stateBackend, err := stateBackend.NewBackend(cfg.State)
+	backend, err := storebackend.NewBackend(cfg.State)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup state: %w", err)
 	}
@@ -58,7 +58,7 @@ func NewServer(cfg *Config) (*Server, error) {
 	server := Server{
 		baseLogger:      zerologger,
 		serverLogger:    pointer.Of(zerologger.With().Str("component", "server").Logger()),
-		state:           stateBackend,
+		state:           backend,
 		nomadController: nomadControler.NewController(zerologger),
 	}
 
@@ -75,7 +75,7 @@ func NewServer(cfg *Config) (*Server, error) {
 
 		srv := httpServer{
 			logger: &serverLogger,
-			mux:    serverHTTP.NewRouter(serverLogger, cfg.HTTP.AccessLogLevel, stateBackend, server.nomadController),
+			mux:    serverHTTP.NewRouter(serverLogger, cfg.HTTP.AccessLogLevel, backend, server.nomadController),
 		}
 
 		// Configure the HTTP server to the most basic level.
@@ -93,11 +93,12 @@ func NewServer(cfg *Config) (*Server, error) {
 		}
 
 		network := "tcp"
+		listenAddr := parsedURL.Host
 		if parsedURL.Scheme == "unix" {
 			network = parsedURL.Scheme
 		}
 
-		ln, err := net.Listen(network, parsedURL.Host)
+		ln, err := net.Listen(network, listenAddr)
 		if err != nil {
 			return nil, fmt.Errorf("failed to setup HTTP listener: %w", err)
 		}

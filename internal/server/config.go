@@ -13,13 +13,13 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/rasorp/attila/internal/logger"
-	"github.com/rasorp/attila/internal/state"
+	storebackend "github.com/rasorp/attila/internal/store/backend"
 )
 
 type Config struct {
-	Log   *logger.Config `hcl:"log,optional"`
-	State *state.Config  `hcl:"state,optional"`
-	HTTP  *HTTPConfig    `hcl:"http,optional"`
+	Log   *logger.Config       `hcl:"log,optional"`
+	State *storebackend.Config `hcl:"state,optional"`
+	HTTP  *HTTPConfig          `hcl:"http,optional"`
 }
 
 func (c *Config) Merge(z *Config) *Config {
@@ -122,7 +122,7 @@ func (h *HTTPConfig) Merge(z *HTTPConfig) *HTTPConfig {
 func DefaultConfig() *Config {
 	return &Config{
 		Log:   logger.DefaultConfig(),
-		State: state.DefaultConfig(),
+		State: storebackend.DefaultConfig(),
 		HTTP: &HTTPConfig{
 			AccessLogLevel: zerolog.LevelInfoValue,
 			Binds: []*BindConfig{

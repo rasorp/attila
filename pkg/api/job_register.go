@@ -116,23 +116,10 @@ func (a *JobRegisterMethods) List(ctx context.Context) (*JobRegisterMethodListRe
 }
 
 type JobRegisterRule struct {
-	Name           string                         `hcl:"name" json:"name"`
-	RegionContexts []JobRegisterRuleRegionContext `hcl:"region_contexts,optional" json:"region_contexts"`
-	RegionFilter   *JobRegisterRuleFilter         `hcl:"region_filter,block" json:"region_filter"`
-	RegionPicker   *JobRegisterRulePicker         `hcl:"region_picker,block" json:"region_picker"`
-	Metadata       *Metadata                      `hcl:"metadata" json:"metadata"`
-}
-
-type JobRegisterRuleFilter struct {
-	Expression *JobRegisterRuleFilterExpression `hcl:"expression,block" json:"expression"`
-}
-
-type JobRegisterRulePicker struct {
-	Expression *JobRegisterRuleFilterExpression `hcl:"expression,block" json:"expression"`
-}
-
-type JobRegisterRuleFilterExpression struct {
-	Selector string `hcl:"selector" json:"selector"`
+	Name           string                          `hcl:"name" json:"name"`
+	RegionContexts []*JobRegisterRuleRegionContext `hcl:"region_contexts,optional" json:"region_contexts"`
+	RegionPickers  []*JobRegisterRegionPicker      `hcl:"region_picker,block" json:"region_pickers"`
+	Metadata       *Metadata                       `hcl:"metadata" json:"metadata"`
 }
 
 type JobRegisterRuleRegionContext string
@@ -141,6 +128,25 @@ const (
 	JobRegisterRuleContextNamespace JobRegisterRuleRegionContext = "namespace"
 	JobRegisterRuleContextNodePool  JobRegisterRuleRegionContext = "node-pool"
 )
+
+// JobRegisterRegionPicker contains all the configuration required to run the
+// region picker process when selecting what regions to register a job into.
+type JobRegisterRegionPicker struct {
+
+	// Name provides a human friendly name to the strategy being used. This
+	// allows the same type to be used multiple times and gives a useful value
+	// in logs.
+	Name string `hcl:",label" json:"name"`
+
+	// Provider is the strategy provider that will be called to execute the
+	// calculation.
+	Provider string `hcl:"provider" json:"provider"`
+
+	// Config is the JSON blob that will be passed to the strategy when executed
+	// that controls its behaviour. The contents of this are specific to the
+	// strategy implementation.
+	Config map[string]any `hcl:"config,block" json:"config,omitempty"`
+}
 
 type JobRegisterRuleStub struct {
 	Name           string                         `json:"name"`

@@ -8,8 +8,9 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/rs/zerolog"
 
+	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
-	"github.com/rasorp/attila/internal/server/state"
+	"github.com/rasorp/attila/internal/store"
 )
 
 type Register struct {
@@ -17,17 +18,17 @@ type Register struct {
 
 	clients *client.Clients
 	job     *api.Job
-	state   state.State
+	state   store.State
 	planID  ulid.ULID
 
-	runResult *state.JobRegisterPlanRun
+	runResult *domain.JobRegisterPlanRun
 }
 
 type RegisterReq struct {
 	Clients *client.Clients
 	Job     *api.Job
 	PlanID  ulid.ULID
-	State   state.State
+	State   store.State
 }
 
 func NewRegister(logger zerolog.Logger, req *RegisterReq) *Register {
@@ -40,14 +41,13 @@ func NewRegister(logger zerolog.Logger, req *RegisterReq) *Register {
 			Str("plan_id", req.PlanID.String()).
 			Str("component", "job_register_runner").Logger(),
 		planID:    req.PlanID,
-		runResult: state.NewJobRegisterPlanRun(*req.Job.ID, *req.Job.Namespace),
+		runResult: domain.NewJobRegisterPlanRun(*req.Job.ID, *req.Job.Namespace),
 		state:     req.State,
 	}
 }
 
-func (r *Register) Run() (*state.JobRegisterPlanRun, error) {
-
-	planResp, err := r.state.JobRegister().Plan().Get(&state.JobRegisterPlanGetReq{ID: r.planID})
+func (r *Register) Run() (*domain.JobRegisterPlanRun, error) {
+	planResp, err := r.state.JobRegister().Plan().Get(&store.JobRegisterPlanGetReq{ID: r.planID})
 	if err != nil {
 		return nil, err
 	}
@@ -61,14 +61,12 @@ func (r *Register) Run() (*state.JobRegisterPlanRun, error) {
 	return r.runResult, nil
 }
 
-func (r *Register) runPlannedRegion(regionPlan *state.JobRegisterRegionPlan) error {
-
+func (r *Register) runPlannedRegion(regionPlan *domain.JobRegisterRegionPlan) error {
 	apiClient, err := r.clients.Get(regionPlan.Region)
 	if err != nil {
 		return err
 	}
 
-	//
 	registerOpts := api.RegisterOptions{
 		EnforceIndex: true,
 		ModifyIndex:  regionPlan.Plan.JobModifyIndex,
@@ -79,7 +77,6 @@ func (r *Register) runPlannedRegion(regionPlan *state.JobRegisterRegionPlan) err
 		Uint64("job_modify_index", registerOpts.ModifyIndex).
 		Msg("regional job register started")
 
-	//
 	registerResp, _, err := apiClient.Jobs().RegisterOpts(r.job, &registerOpts, nil)
 	r.runResult.AddRegion(regionPlan.Region, registerResp, err)
 

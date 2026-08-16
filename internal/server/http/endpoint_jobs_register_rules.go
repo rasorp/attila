@@ -12,11 +12,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/rasorp/attila/internal/server/state"
+	"github.com/rasorp/attila/internal/domain"
+	"github.com/rasorp/attila/internal/register/region/picker"
+	"github.com/rasorp/attila/internal/store"
+	jobsdk "github.com/rasorp/attila/pkg/job"
 )
 
 type JobRegisterRuleCreateResp struct {
-	Rule                 *state.JobRegisterRule `json:"rule"`
+	Rule                 *domain.JobRegisterRule `json:"rule"`
 	internalResponseMeta `json:"-"`
 }
 
@@ -25,17 +28,17 @@ type JobRegisterRuleDeleteResp struct {
 }
 
 type JobRegisterRuleGetResp struct {
-	Rule                 *state.JobRegisterRule `json:"rule"`
+	Rule                 *domain.JobRegisterRule `json:"rule"`
 	internalResponseMeta `json:"-"`
 }
 
 type JobRegisterRuleListResp struct {
-	Rules                []*state.JobRegisterRuleStub `json:"rules"`
+	Rules                []*domain.JobRegisterRuleStub `json:"rules"`
 	internalResponseMeta `json:"-"`
 }
 
 type jobsRegisterRulesEndpoint struct {
-	state state.State
+	state store.State
 }
 
 func (j jobsRegisterRulesEndpoint) routes() chi.Router {
@@ -58,11 +61,10 @@ func (j jobsRegisterRulesEndpoint) routes() chi.Router {
 }
 
 func (j jobsRegisterRulesEndpoint) create(w http.ResponseWriter, r *http.Request) {
-
-	var ruleObj state.JobRegisterRule
+	var ruleObj domain.JobRegisterRule
 
 	if err := json.NewDecoder(r.Body).Decode(&ruleObj); err != nil {
-		httpWriteResponseError(w, NewResponseError(fmt.Errorf("failed to decode object: %w", err), 400))
+		httpWriteResponseError(w, NewResponseError(fmt.Errorf("failed to decode object: %w", err), http.StatusBadRequest))
 		return
 	}
 
@@ -71,10 +73,20 @@ func (j jobsRegisterRulesEndpoint) create(w http.ResponseWriter, r *http.Request
 		httpWriteResponseError(w, respErr)
 		return
 	}
+	var strategySpecs []*jobsdk.RegionPickerConfig
 
-	ruleObj.Metadata = state.NewMetadata()
+	if len(ruleObj.RegionPickers) > 0 {
+		strategySpecs = ruleObj.RegionPickers
+	}
+	if _, err := picker.New(strategySpecs); err != nil {
+		respErr := NewResponseError(err, http.StatusBadRequest)
+		httpWriteResponseError(w, respErr)
+		return
+	}
 
-	stateReq := state.JobRegisterRuleCreateReq{Rule: &ruleObj}
+	ruleObj.Metadata = domain.NewMetadata()
+
+	stateReq := store.JobRegisterRuleCreateReq{Rule: &ruleObj}
 
 	ruleCreateResp, err := j.state.JobRegister().Rule().Create(&stateReq)
 	if err != nil {
@@ -92,14 +104,14 @@ func (j jobsRegisterRulesEndpoint) create(w http.ResponseWriter, r *http.Request
 func (j jobsRegisterRulesEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 	ruleName := r.Context().Value("rule-name").(string)
 
-	stateReq := state.JobRegisterRuleDeleteReq{Name: ruleName}
+	stateReq := store.JobRegisterRuleDeleteReq{Name: ruleName}
 
 	_, err := j.state.JobRegister().Rule().Delete(&stateReq)
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
 	} else {
-		resp := JobRegisterMethodDeleteResp{
+		resp := JobRegisterRuleDeleteResp{
 			internalResponseMeta: newInternalResponseMeta(http.StatusNoContent),
 		}
 		httpWriteResponse(w, &resp)
@@ -109,7 +121,7 @@ func (j jobsRegisterRulesEndpoint) delete(w http.ResponseWriter, r *http.Request
 func (j jobsRegisterRulesEndpoint) get(w http.ResponseWriter, r *http.Request) {
 	ruleName := r.Context().Value("rule-name").(string)
 
-	stateReq := state.JobRegisterRuleGetReq{Name: ruleName}
+	stateReq := store.JobRegisterRuleGetReq{Name: ruleName}
 
 	ruleGetResp, err := j.state.JobRegister().Rule().Get(&stateReq)
 	if err != nil {
@@ -125,13 +137,13 @@ func (j jobsRegisterRulesEndpoint) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (j jobsRegisterRulesEndpoint) list(w http.ResponseWriter, r *http.Request) {
-	ruleListResp, err := j.state.JobRegister().Rule().List(&state.JobRegisterRuleListReq{})
+	ruleListResp, err := j.state.JobRegister().Rule().List(&store.JobRegisterRuleListReq{})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
 	} else {
 		resp := JobRegisterRuleListResp{
-			Rules:                make([]*state.JobRegisterRuleStub, len(ruleListResp.Rules)),
+			Rules:                make([]*domain.JobRegisterRuleStub, len(ruleListResp.Rules)),
 			internalResponseMeta: newInternalResponseMeta(http.StatusOK),
 		}
 

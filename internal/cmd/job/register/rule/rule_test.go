@@ -9,13 +9,14 @@ import (
 	"github.com/shoenig/test/must"
 
 	"github.com/rasorp/attila/pkg/api"
+	jobsdk "github.com/rasorp/attila/pkg/job"
 )
 
 func Test_formatRegionPicker(t *testing.T) {
 
 	testCases := []struct {
 		name            string
-		inputRulePicker *api.JobRegisterRulePicker
+		inputRulePicker []*api.JobRegisterRegionPicker
 		expectedOutput  string
 	}{
 		{
@@ -24,18 +25,17 @@ func Test_formatRegionPicker(t *testing.T) {
 			expectedOutput:  "",
 		},
 		{
-			name:            "nil expression",
-			inputRulePicker: &api.JobRegisterRulePicker{},
+			name:            "empty strategies",
+			inputRulePicker: []*api.JobRegisterRegionPicker{},
 			expectedOutput:  "",
 		},
 		{
-			name: "populated expression selector",
-			inputRulePicker: &api.JobRegisterRulePicker{
-				Expression: &api.JobRegisterRuleFilterExpression{
-					Selector: "this.expression",
-				},
+			name: "populated strategies",
+			inputRulePicker: []*api.JobRegisterRegionPicker{
+				{Name: "foo", Provider: jobsdk.RegionPickerProviderFilter},
+				{Name: "bar", Provider: jobsdk.RegionPickerProviderFilter},
 			},
-			expectedOutput: "this.expression",
+			expectedOutput: "filter::foo, filter::bar",
 		},
 	}
 

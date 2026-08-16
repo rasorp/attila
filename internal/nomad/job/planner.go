@@ -6,15 +6,17 @@ package job
 import (
 	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/expr-lang/expr"
-	"github.com/hashicorp/go-set/v3"
 	"github.com/hashicorp/nomad/api"
 	"github.com/rs/zerolog"
 
+	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
-	"github.com/rasorp/attila/internal/server/state"
+	"github.com/rasorp/attila/internal/register/region/picker"
+	pickercontext "github.com/rasorp/attila/internal/register/region/picker/context"
+	"github.com/rasorp/attila/internal/store"
+	jobsdk "github.com/rasorp/attila/pkg/job"
 )
 
 type Planner struct {
@@ -22,16 +24,15 @@ type Planner struct {
 
 	clients *client.Clients
 	job     *api.Job
-	state   state.State
+	state   store.State
 
-	//
-	plan *state.JobRegisterPlan
+	plan *domain.JobRegisterPlan
 }
 
 type PlannerReq struct {
 	Clients *client.Clients
 	Job     *api.Job
-	State   state.State
+	State   store.State
 }
 
 func NewPlanner(logger zerolog.Logger, req *PlannerReq) *Planner {
@@ -43,13 +44,12 @@ func NewPlanner(logger zerolog.Logger, req *PlannerReq) *Planner {
 			Str("job_namespace", *req.Job.Namespace).
 			Str("component", "job_register_planner").
 			Logger(),
-		plan:  state.NewJobRegisterPlan(*req.Job.ID, *req.Job.Namespace),
+		plan:  domain.NewJobRegisterPlan(*req.Job.ID, *req.Job.Namespace),
 		state: req.State,
 	}
 }
 
-func (p *Planner) Run() (*state.JobRegisterPlan, error) {
-
+func (p *Planner) Run() (*domain.JobRegisterPlan, error) {
 	listResp, err := p.state.JobRegister().Method().List(nil)
 	if err != nil {
 		return nil, err
@@ -58,10 +58,9 @@ func (p *Planner) Run() (*state.JobRegisterPlan, error) {
 		return nil, errors.New("found zero job register methods")
 	}
 
-	var ruleLinks []*state.JobRegisterMethodRuleLink
+	var ruleLinks []*domain.JobRegisterMethodRuleLink
 
 	for _, method := range listResp.Methods {
-
 		exprProgram, err := expr.Compile(method.Selector, expr.AsBool())
 		if err != nil {
 			return nil, fmt.Errorf("failed to compile method selector: %w", err)
@@ -77,10 +76,10 @@ func (p *Planner) Run() (*state.JobRegisterPlan, error) {
 		}
 	}
 
-	var rules []*state.JobRegisterRule
+	var rules []*domain.JobRegisterRule
 
 	for _, ruleLink := range ruleLinks {
-		regRule, err := p.state.JobRegister().Rule().Get(&state.JobRegisterRuleGetReq{Name: ruleLink.Name})
+		regRule, err := p.state.JobRegister().Rule().Get(&store.JobRegisterRuleGetReq{Name: ruleLink.Name})
 		if err != nil {
 			return nil, err
 		}
@@ -96,13 +95,12 @@ func (p *Planner) Run() (*state.JobRegisterPlan, error) {
 	}
 
 	for _, rule := range rules {
-
-		filteredRegions, err := p.runRegisterPlanRule(rule, regionListResp.Regions)
+		pickedRegions, err := p.runRegisterPlanPicker(rule, regionListResp.Regions)
 		if err != nil {
 			return nil, err
 		}
 
-		if err := p.runRegisterPlanPicker(rule, filteredRegions); err != nil {
+		if err := p.generatePlanResult(rule.Name, pickedRegions); err != nil {
 			return nil, err
 		}
 	}
@@ -110,89 +108,64 @@ func (p *Planner) Run() (*state.JobRegisterPlan, error) {
 	return p.plan, nil
 }
 
-func (p *Planner) runRegisterPlanRule(
-	rule *state.JobRegisterRule, regions []*state.Region) ([]*state.Region, error) {
-
-	filteredRegions := set.New[*state.Region](0)
-
-	for _, region := range regions {
-
-		p.logger.Debug().
-			Str("rule_name", rule.Name).
-			Str("region_name", region.Name).
-			Msg("performing execution of rule region filter")
-
-		regionClient, err := p.clients.Get(region.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		context := map[string]any{"job": p.job, "region": region}
-
-		if err := populateRegionContext(rule, regionClient, context); err != nil {
-			return nil, err
-		}
-
-		exprProgram, err := expr.Compile(rule.RegionFilter.Expression.Selector, expr.AsBool())
-		if err != nil {
-			return nil, fmt.Errorf("failed to compile method selector: %w", err)
-		}
-
-		resultBool, err := expr.Run(exprProgram, context)
-		if err != nil {
-			return nil, fmt.Errorf("failed to run method selector: %w", err)
-		}
-
-		//
-		if resultBool.(bool) {
-
-			filteredRegions.Insert(region)
-
-			p.logger.Debug().
-				Str("rule_name", rule.Name).
-				Str("region_name", region.Name).
-				Msg("region passed rule region filter")
-		}
-	}
-
-	return filteredRegions.Slice(), nil
-}
-
-// runRegisterPlanPicker executes the job registration plan from the picker
-// stage onwards and includes populating the result entries for any picked and
-// planned regions.
+// runRegisterPlanPicker executes the job registration plan strategy pipeline and
+// returns the set of regions selected for plan generation.
 func (p *Planner) runRegisterPlanPicker(
-	rule *state.JobRegisterRule, regions []*state.Region) error {
-
+	rule *domain.JobRegisterRule, regions []*domain.Region) ([]*domain.Region, error) {
 	p.logger.Debug().
 		Str("rule_name", rule.Name).
 		Int("num_regions", len(regions)).
 		Msg("performing execution of rule region picker")
 
-	// If no region picker or expression was supplied in the rule, we assume all
-	// regions that passed the filter are picked for registration.
-	if rule.RegionPicker == nil || rule.RegionPicker.Expression == nil {
-		return p.generatePlanResult(rule.Name, regions)
+	if len(rule.RegionPickers) == 0 {
+		return regions, nil
 	}
 
-	regionContext := map[string]any{"regions": regions}
+	candidates, err := pickercontext.BuildCandidates(regions, func(region *domain.Region) (map[string]any, error) {
+		regionClient, err := p.clients.Get(region.Name)
+		if err != nil {
+			return nil, err
+		}
 
-	exprProgram, err := expr.Compile(rule.RegionPicker.Expression.Selector, expr.AsKind(reflect.Slice))
+		ctx := make(map[string]any)
+		if err := populateRegionContext(rule, regionClient, ctx); err != nil {
+			return nil, err
+		}
+		return ctx, nil
+	})
 	if err != nil {
-		return fmt.Errorf("failed to compile picker expression selector: %w", err)
+		return nil, err
 	}
 
-	pickerResult, err := expr.Run(exprProgram, regionContext)
+	picker, err := picker.New(rule.RegionPickers)
 	if err != nil {
-		return fmt.Errorf("failed to run picker expression selector: %w", err)
+		return nil, err
 	}
 
-	pickedRegions, ok := pickerResult.([]*state.Region)
-	if !ok {
-		return fmt.Errorf("picker expression selector returned incorrect type: %T", pickerResult)
+	pickedCandidates, err := picker.Process(&jobsdk.RegionPickerRunRequest{
+		Job:              p.job,
+		Rule:             domainJobRegisterRuleToPickerRule(rule),
+		RegionCandidates: candidates,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	return p.generatePlanResult(rule.Name, pickedRegions)
+	regionByName := make(map[string]*domain.Region, len(regions))
+	for _, region := range regions {
+		regionByName[region.Name] = region
+	}
+
+	pickedRegions := make([]*domain.Region, 0, len(pickedCandidates))
+	for _, candidate := range pickedCandidates {
+		region, ok := regionByName[candidate.Name]
+		if !ok {
+			return nil, fmt.Errorf("strategy selected unknown region %q", candidate.Name)
+		}
+		pickedRegions = append(pickedRegions, region)
+	}
+
+	return pickedRegions, nil
 }
 
 // generatePlanResult iterates the selected region slice and perform a Nomad
@@ -201,10 +174,8 @@ func (p *Planner) runRegisterPlanPicker(
 //
 // Any failure in calling the Nomad API will result in a failure of the whole
 // function.
-func (p *Planner) generatePlanResult(ruleName string, regions []*state.Region) error {
-
+func (p *Planner) generatePlanResult(ruleName string, regions []*domain.Region) error {
 	for _, pickedRegion := range regions {
-
 		nomadClient, err := p.clients.Get(pickedRegion.Name)
 		if err != nil {
 			return fmt.Errorf("failed to get Nomad client, %w", err)
@@ -227,19 +198,41 @@ func (p *Planner) generatePlanResult(ruleName string, regions []*state.Region) e
 	return nil
 }
 
-func populateRegionContext(
-	rule *state.JobRegisterRule, client *api.Client, ctx map[string]any) error {
+func domainJobRegisterRuleToPickerRule(rule *domain.JobRegisterRule) *jobsdk.RegionPickerRule {
 
+	regionContexts := make([]string, 0, len(rule.RegionContexts))
+	for _, regionContext := range rule.RegionContexts {
+		regionContexts = append(regionContexts, string(regionContext))
+	}
+
+	var metadata *jobsdk.RegionPickerMetadata
+	if rule.Metadata != nil {
+		metadata = &jobsdk.RegionPickerMetadata{
+			CreateTime: rule.Metadata.CreateTime,
+			UpdateTime: rule.Metadata.UpdateTime,
+		}
+	}
+
+	return &jobsdk.RegionPickerRule{
+		Name:           rule.Name,
+		RegionContexts: regionContexts,
+		RegionPickers:  rule.RegionPickers,
+		Metadata:       metadata,
+	}
+}
+
+func populateRegionContext(
+	rule *domain.JobRegisterRule, client *api.Client, ctx map[string]any) error {
 	for _, regionContext := range rule.RegionContexts {
 		switch regionContext {
-		case state.JobRegisterRuleContextNamespace:
+		case domain.JobRegisterRuleContextNamespace:
 			namespaceList, _, err := client.Namespaces().List(nil)
 			if err != nil {
 				return err
 			}
 			ctx["region_namespace"] = namespaceList
 
-		case state.JobRegisterRuleContextNodePool:
+		case domain.JobRegisterRuleContextNodePool:
 			nodepoolList, _, err := client.NodePools().List(nil)
 			if err != nil {
 				return err

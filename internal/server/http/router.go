@@ -10,10 +10,10 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/rasorp/attila/internal/server/nomad"
-	"github.com/rasorp/attila/internal/server/state"
+	"github.com/rasorp/attila/internal/store"
 )
 
-func NewRouter(logger zerolog.Logger, accessLevel string, stateStore state.State, nomadController nomad.Controller) *chi.Mux {
+func NewRouter(logger zerolog.Logger, accessLevel string, stateStore store.State, nomadController nomad.Controller) *chi.Mux {
 
 	r := chi.NewRouter()
 	r.Use(loggerMiddleware(logger, accessLevel))
@@ -38,7 +38,7 @@ func NewRouter(logger zerolog.Logger, accessLevel string, stateStore state.State
 	return r
 }
 
-func jobRouter(logger zerolog.Logger, stateStore state.State, nomadController nomad.Controller) http.Handler {
+func jobRouter(logger zerolog.Logger, stateStore store.State, nomadController nomad.Controller) http.Handler {
 	r := chi.NewRouter()
 
 	r.Mount("/register/methods", jobsRegisterMethodsEndpoint{

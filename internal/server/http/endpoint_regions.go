@@ -12,16 +12,17 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/server/nomad"
-	"github.com/rasorp/attila/internal/server/state"
+	"github.com/rasorp/attila/internal/store"
 )
 
 type RegionCreateReq struct {
-	Region *state.Region `json:"region"`
+	Region *domain.Region `json:"region"`
 }
 
 type RegionCreateResp struct {
-	Region               *state.Region `json:"region"`
+	Region               *domain.Region `json:"region"`
 	internalResponseMeta `json:"-"`
 }
 
@@ -30,17 +31,17 @@ type RegionDeleteResp struct {
 }
 
 type RegionGetResp struct {
-	Region               *state.Region `json:"region"`
+	Region               *domain.Region `json:"region"`
 	internalResponseMeta `json:"-"`
 }
 
 type RegionListResp struct {
-	Regions              []*state.RegionStub `json:"regions"`
+	Regions              []*domain.RegionStub `json:"regions"`
 	internalResponseMeta `json:"-"`
 }
 
 type regionsEndpoint struct {
-	state           state.State
+	state           store.State
 	nomadController nomad.Controller
 }
 
@@ -64,11 +65,10 @@ func (a regionsEndpoint) routes() chi.Router {
 }
 
 func (a regionsEndpoint) create(w http.ResponseWriter, r *http.Request) {
-
-	var req state.RegionCreateReq
+	var req RegionCreateReq
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpWriteResponseError(w, NewResponseError(fmt.Errorf("failed to decode object: %w", err), 400))
+		httpWriteResponseError(w, NewResponseError(fmt.Errorf("failed to decode object: %w", err), http.StatusBadRequest))
 		return
 	}
 
@@ -84,11 +84,12 @@ func (a regionsEndpoint) create(w http.ResponseWriter, r *http.Request) {
 	if clientErr != nil {
 		respErr := NewResponseError(clientErr, http.StatusBadRequest)
 		httpWriteResponseError(w, respErr)
+		return
 	}
 
-	req.Region.Metadata = state.NewMetadata()
+	req.Region.Metadata = domain.NewMetadata()
 
-	stateReq := state.RegionCreateReq{Region: req.Region}
+	stateReq := store.RegionCreateReq{Region: req.Region}
 
 	stateResp, err := a.state.Region().Create(&stateReq)
 	if err != nil {
@@ -107,7 +108,7 @@ func (a regionsEndpoint) create(w http.ResponseWriter, r *http.Request) {
 func (a regionsEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 	regionName := r.Context().Value("region-name").(string)
 
-	stateReq := state.RegionDeleteReq{RegionName: regionName}
+	stateReq := store.RegionDeleteReq{RegionName: regionName}
 
 	_, err := a.state.Region().Delete(&stateReq)
 	if err != nil {
@@ -125,7 +126,7 @@ func (a regionsEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 func (a regionsEndpoint) get(w http.ResponseWriter, r *http.Request) {
 	regionName := r.Context().Value("region-name").(string)
 
-	stateReq := state.RegionGetReq{RegionName: regionName}
+	stateReq := store.RegionGetReq{RegionName: regionName}
 
 	regionGetResp, err := a.state.Region().Get(&stateReq)
 	if err != nil {
@@ -141,13 +142,13 @@ func (a regionsEndpoint) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a regionsEndpoint) list(w http.ResponseWriter, r *http.Request) {
-	regionListResp, err := a.state.Region().List(&state.RegionListReq{})
+	regionListResp, err := a.state.Region().List(&store.RegionListReq{})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
 	} else {
 		resp := RegionListResp{
-			Regions:              make([]*state.RegionStub, len(regionListResp.Regions)),
+			Regions:              make([]*domain.RegionStub, len(regionListResp.Regions)),
 			internalResponseMeta: newInternalResponseMeta(http.StatusOK),
 		}
 
