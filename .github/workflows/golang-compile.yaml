@@ -1,10 +1,15 @@
 name: Golang - Compile
+
 on:
+  # The release workflow will call this workflow to build the binaries, so we
+  # need to allow workflow triggers.
+  workflow_call:
   push:
     paths-ignore:
       - '.github/workflows/**'
       - 'docs/**'
       - 'README.md'
+
 jobs:
   compile:
     strategy:
@@ -20,3 +25,8 @@ jobs:
       - name: "Run compile"
         run: |
           make "bin/${{ matrix.goos }}_${{ matrix.goarch }}/attila"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attila_${{ matrix.goos }}-${{ matrix.goarch }}
+          path: bin/${{ matrix.goos }}_${{ matrix.goarch }}/attila
+          retention-days: 14

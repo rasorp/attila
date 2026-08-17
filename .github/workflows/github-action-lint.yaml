@@ -1,5 +1,6 @@
 name: GitHub - Action Lint
 on:
+  workflow_call:
   push:
     paths:
       - '.github/workflows/**'
