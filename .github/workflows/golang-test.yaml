@@ -1,5 +1,6 @@
 name: Golang - Test
 on:
+  workflow_call:
   push:
     paths-ignore:
       - '.github/workflows/**'
