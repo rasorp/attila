@@ -117,16 +117,28 @@ func (a *JobRegisterMethods) List(ctx context.Context) (*JobRegisterMethodListRe
 
 type JobRegisterRule struct {
 	Name           string                          `hcl:"name" json:"name"`
-	RegionContexts []*JobRegisterRuleRegionContext `hcl:"region_contexts,optional" json:"region_contexts"`
+	RegionContexts []*JobRegisterRuleRegionContext `hcl:"region_context,block" json:"region_contexts"`
 	RegionPickers  []*JobRegisterRegionPicker      `hcl:"region_picker,block" json:"region_pickers"`
 	Metadata       *Metadata                       `hcl:"metadata" json:"metadata"`
 }
 
-type JobRegisterRuleRegionContext string
+// JobRegisterRuleRegionContext is a way to make additional resource information
+// about the region being available to the picker.
+type JobRegisterRuleRegionContext struct {
+
+	// Kind is the context that will be made available to the rule picker. It
+	// currently supports namespace and node-pool.
+	Kind string `hcl:"kind" json:"kind"`
+}
 
 const (
-	JobRegisterRuleContextNamespace JobRegisterRuleRegionContext = "namespace"
-	JobRegisterRuleContextNodePool  JobRegisterRuleRegionContext = "node-pool"
+	// JobRegisterRuleContextKindNamespace is the context kind that supplies
+	// information from Nomad's "v1/namespaces" endpoint.
+	JobRegisterRuleContextKindNamespace = "namespace"
+
+	// JobRegisterRuleContextKindNodepool is the context kind that supplies
+	// information from Nomad's "v1/node/pools" endpoint.
+	JobRegisterRuleContextKindNodepool = "node-pool"
 )
 
 // JobRegisterRegionPicker contains all the configuration required to run the

@@ -47,9 +47,21 @@ type JobRegisterRuleStub struct {
 	RegionContexts []JobRegisterRuleRegionContext `json:"region_contexts"`
 }
 
-type JobRegisterRuleRegionContext string
+// JobRegisterRuleRegionContext is a way to make additional resource information
+// about the region being available to the picker.
+type JobRegisterRuleRegionContext struct {
+
+	// Kind is the context that will be made available to the rule picker. It
+	// currently supports namespace and node-pool.
+	Kind string `json:"kind"`
+}
 
 const (
-	JobRegisterRuleContextNamespace JobRegisterRuleRegionContext = "namespace"
-	JobRegisterRuleContextNodePool  JobRegisterRuleRegionContext = "node-pool"
+	// JobRegisterRuleContextKindNamespace is the context kind that supplies
+	// information from Nomad's "v1/namespaces" endpoint.
+	JobRegisterRuleContextKindNamespace = "namespace"
+
+	// JobRegisterRuleContextKindNodepool is the context kind that supplies
+	// information from Nomad's "v1/node/pools" endpoint.
+	JobRegisterRuleContextKindNodepool = "node-pool"
 )

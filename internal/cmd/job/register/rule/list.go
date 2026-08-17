@@ -60,7 +60,7 @@ func formatRegionContexts(ctxs []api.JobRegisterRuleRegionContext) string {
 	ctxStrings := make([]string, len(ctxs))
 
 	for i, ctx := range ctxs {
-		ctxStrings[i] = string(ctx)
+		ctxStrings[i] = ctx.Kind
 	}
 
 	return strings.Join(ctxStrings, ", ")

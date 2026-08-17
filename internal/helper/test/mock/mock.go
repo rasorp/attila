@@ -65,8 +65,8 @@ func JobRegistrationRule() *domain.JobRegisterRule {
 	return &domain.JobRegisterRule{
 		Name: "mock-" + ulid.Make().String(),
 		RegionContexts: []domain.JobRegisterRuleRegionContext{
-			domain.JobRegisterRuleContextNamespace,
-			domain.JobRegisterRuleContextNodePool,
+			{Kind: domain.JobRegisterRuleContextKindNamespace},
+			{Kind: domain.JobRegisterRuleContextKindNodepool},
 		},
 		RegionPickers: []*jobsdk.RegionPickerConfig{
 			{

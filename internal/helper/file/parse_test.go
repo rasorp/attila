@@ -18,8 +18,9 @@ func TestParseConfig_HCL_NormalizesRegionPickerConfig(t *testing.T) {
 	testFile := filepath.Join(testDir, "rule.hcl")
 
 	must.NoError(t, os.WriteFile(testFile, []byte(`
-name            = "platform_namespace"
-region_contexts = ["namespace"]
+name = "platform_namespace"
+
+region_context { kind = "namespace" }
 
 region_picker "europe-region" {
   provider = "expr"
