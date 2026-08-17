@@ -1,5 +1,6 @@
-name            = "europe-platform"
-region_contexts = ["namespace"]
+name = "europe-platform"
+
+region_context { kind = "namespace" }
 
 region_picker "europe-region" {
   provider = "expr"

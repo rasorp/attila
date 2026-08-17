@@ -43,7 +43,7 @@ func outputRule(cliCtx *cli.Context, r *api.JobRegisterRule) {
 func contextsAsString(ctxs []*api.JobRegisterRuleRegionContext) string {
 	var s []string
 	for _, regionCtx := range ctxs {
-		s = append(s, string(*regionCtx))
+		s = append(s, regionCtx.Kind)
 	}
 	return strings.Join(s, ", ")
 }

@@ -203,7 +203,7 @@ func domainJobRegisterRuleToPickerRule(rule *domain.JobRegisterRule) *jobsdk.Reg
 
 	regionContexts := make([]string, 0, len(rule.RegionContexts))
 	for _, regionContext := range rule.RegionContexts {
-		regionContexts = append(regionContexts, string(regionContext))
+		regionContexts = append(regionContexts, regionContext.Kind)
 	}
 
 	var metadata *jobsdk.RegionPickerMetadata
@@ -225,15 +225,15 @@ func domainJobRegisterRuleToPickerRule(rule *domain.JobRegisterRule) *jobsdk.Reg
 func populateRegionContext(
 	rule *domain.JobRegisterRule, client *api.Client, ctx map[string]any) error {
 	for _, regionContext := range rule.RegionContexts {
-		switch regionContext {
-		case domain.JobRegisterRuleContextNamespace:
+		switch regionContext.Kind {
+		case domain.JobRegisterRuleContextKindNamespace:
 			namespaceList, _, err := client.Namespaces().List(nil)
 			if err != nil {
 				return err
 			}
 			ctx["region_namespace"] = namespaceList
 
-		case domain.JobRegisterRuleContextNodePool:
+		case domain.JobRegisterRuleContextKindNodepool:
 			nodepoolList, _, err := client.NodePools().List(nil)
 			if err != nil {
 				return err
