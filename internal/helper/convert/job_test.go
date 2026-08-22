@@ -94,6 +94,7 @@ func TestJobToMap(t *testing.T) {
 					"Scaling":                      nil,
 					"Constraints":                  []any{},
 					"Affinities":                   []any{},
+					"max_run_duration":             nil,
 					"Tasks": []any{
 						map[string]any{
 							"Lifecycle":       nil,
@@ -129,6 +130,7 @@ func TestJobToMap(t *testing.T) {
 							"kill_signal":     "",
 							"Identities":      []any{},
 							"Schedule":        nil,
+							"Secrets":         []any{},
 						},
 					},
 					"Update": nil,
