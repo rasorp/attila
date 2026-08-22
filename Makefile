@@ -76,3 +76,9 @@ test-deps: ## Install Attila test dependencies
 	@echo "==> Installing test dependencies..."
 	@go install gotest.tools/gotestsum@v1.13.0
 	@echo "==> Done"
+
+.PHONY: e2e
+e2e: ## Run the e2e tests
+	@echo "==> Running Attila e2e tests..."
+	@go test -tags=e2e -v -count=1 ./e2e...
+	@echo "==> Done"
