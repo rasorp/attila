@@ -6,6 +6,7 @@ package method
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/urfave/cli/v2"
 
@@ -44,12 +45,22 @@ func formatMethodList(methods []*api.JobRegisterMethodStub) string {
 	}
 
 	out := make([]string, 0, len(methods)+1)
-	out = append(out, "Name|Selector")
+	out = append(out, "Name|Selectors")
 	for _, method := range methods {
 		out = append(out, fmt.Sprintf(
 			"%s|%s",
-			method.Name, method.Selector))
+			method.Name, formatSelectorsList(method.Selectors)))
 	}
 
 	return helper.FormatList(out)
+}
+
+func formatSelectorsList(selectors []*api.JobRegisterMethodSelectorStub) string {
+	var s []string
+
+	for _, selector := range selectors {
+		s = append(s, fmt.Sprintf("%s::%s", selector.Provider, selector.Name))
+	}
+
+	return strings.Join(s, ", ")
 }

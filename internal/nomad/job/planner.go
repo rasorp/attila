@@ -7,18 +7,19 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/expr-lang/expr"
 	"github.com/hashicorp/nomad/api"
 	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
+	"github.com/rasorp/attila/internal/register/method/selector"
 	"github.com/rasorp/attila/internal/register/region/picker"
 	pickercontext "github.com/rasorp/attila/internal/register/region/picker/context"
 	"github.com/rasorp/attila/internal/store"
 	jobsdk "github.com/rasorp/attila/pkg/job"
 )
 
+// Planner manages job registration planning for a single incoming job.
 type Planner struct {
 	logger *zap.Logger
 
@@ -57,35 +58,37 @@ func (p *Planner) Run() (*domain.JobRegisterPlan, error) {
 		return nil, errors.New("found zero job register methods")
 	}
 
-	var ruleLinks []*domain.JobRegisterMethodRuleLink
+	// Collect rules from all matching methods. Each method's selectors are
+	// evaluated independently and the job flows through every method that
+	// applies.
+	var rules []*domain.JobRegisterRule
 
 	for _, method := range listResp.Methods {
-		exprProgram, err := expr.Compile(method.Selector, expr.AsBool())
+
+		sel, err := selector.New(p.logger, method.Selectors)
 		if err != nil {
-			return nil, fmt.Errorf("failed to compile method selector: %w", err)
+			return nil, fmt.Errorf("failed to build method selector: %w", err)
 		}
 
-		resultBool, err := expr.Run(exprProgram, p.job)
+		result, err := sel.Run(&selector.RunRequest{Job: p.job})
 		if err != nil {
 			return nil, fmt.Errorf("failed to run method selector: %w", err)
 		}
 
-		if resultBool.(bool) {
-			ruleLinks = append(ruleLinks, method.Rules...)
+		if !result.Match {
+			continue
 		}
-	}
 
-	var rules []*domain.JobRegisterRule
-
-	for _, ruleLink := range ruleLinks {
-		regRule, err := p.state.JobRegister().Rule().Get(&store.JobRegisterRuleGetReq{Name: ruleLink.Name})
-		if err != nil {
-			return nil, err
+		for _, ruleLink := range method.Rules {
+			regRule, err := p.state.JobRegister().Rule().Get(&store.JobRegisterRuleGetReq{Name: ruleLink.Name})
+			if err != nil {
+				return nil, err
+			}
+			if regRule == nil {
+				return nil, fmt.Errorf("job registration rule %q not found", ruleLink.Name)
+			}
+			rules = append(rules, regRule.Rule)
 		}
-		if regRule == nil {
-			return nil, fmt.Errorf("job registration rule not found: %q", ruleLink.Name)
-		}
-		rules = append(rules, regRule.Rule)
 	}
 
 	regionListResp, err := p.state.Region().List(nil)
