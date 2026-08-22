@@ -152,5 +152,5 @@ func MustEncodeParams(v any) json.RawMessage {
 	if err != nil {
 		panic(err)
 	}
-	return bytes
+	return json.RawMessage(bytes)
 }

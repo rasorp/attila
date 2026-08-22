@@ -12,15 +12,40 @@ import (
 )
 
 type JobRegisterMethod struct {
-	Name     string                       `hcl:"name" json:"name"`
-	Selector string                       `hcl:"selector" json:"selector"`
-	Rules    []*JobRegisterMethodRuleLink `hcl:"rule,block" json:"rule"`
-	Metadata *Metadata                    `hcl:"metadata" json:"metadata"`
+	Name      string                       `hcl:"name" json:"name"`
+	Selectors []*JobRegisterMethodSelector `hcl:"selector,block" json:"selectors"`
+	Rules     []*JobRegisterMethodRuleLink `hcl:"rule,block" json:"rules"`
+	Metadata  *Metadata                    `hcl:"metadata" json:"metadata"`
+}
+
+// JobRegisterMethodSelector contains all the configuration required to run the
+// method selector process when selecting what rules apply to an incoming job
+// plan or registration.
+type JobRegisterMethodSelector struct {
+
+	// Name provides a human friendly name to the strategy being used. This
+	// allows the same type to be used multiple times and gives a useful value
+	// in logs.
+	Name string `hcl:",label" json:"name"`
+
+	// Provider is the strategy provider that will be called to execute the
+	// calculation.
+	Provider string `hcl:"provider" json:"provider"`
+
+	// Config is the JSON blob that will be passed to the strategy when executed
+	// that controls its behaviour. The contents of this are specific to the
+	// strategy implementation.
+	Config map[string]any `hcl:"config,block" json:"config,omitempty"`
 }
 
 type JobRegisterMethodStub struct {
-	Name     string `hcl:"name" json:"name"`
-	Selector string `hcl:"selector" json:"selector"`
+	Name      string                           `json:"name"`
+	Selectors []*JobRegisterMethodSelectorStub `json:"selectors"`
+}
+
+type JobRegisterMethodSelectorStub struct {
+	Name     string `json:"name"`
+	Provider string `json:"provider"`
 }
 
 type JobRegisterMethodRuleLink struct {

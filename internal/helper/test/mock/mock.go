@@ -43,8 +43,16 @@ func Region() *domain.Region {
 
 func JobRegistrationMethod() *domain.JobRegisterMethod {
 	return &domain.JobRegisterMethod{
-		Name:     "mock-" + ulid.Make().String(),
-		Selector: "Namespace == \"platform\"",
+		Name: "mock-" + ulid.Make().String(),
+		Selectors: []*jobsdk.MethodSelectorConfig{
+			{
+				MethodSelectorBaseConfig: &jobsdk.MethodSelectorBaseConfig{
+					Name:     "mock",
+					Provider: jobsdk.MethodSelectorProviderFilter,
+				},
+				ProviderConfig: map[string]any{"expression": "Namespace == \"platform\""},
+			},
+		},
 		Rules: []*domain.JobRegisterMethodRuleLink{
 			{Name: "mock-" + ulid.Make().String()},
 			{Name: "mock-" + ulid.Make().String()},

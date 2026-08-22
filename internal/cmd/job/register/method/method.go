@@ -31,10 +31,20 @@ func Command() *cli.Command {
 func outputMethod(cliCtx *cli.Context, m *api.JobRegisterMethod) {
 	_, _ = fmt.Fprint(cliCtx.App.Writer, helper.FormatKV([]string{
 		fmt.Sprintf("Name|%s", m.Name),
-		fmt.Sprintf("Selector|%s", m.Selector),
 		fmt.Sprintf("Create Time|%s", helper.FormatTime(m.Metadata.CreateTime)),
 		fmt.Sprintf("Update Time|%s", helper.FormatTime(m.Metadata.UpdateTime)),
 	}))
+	_, _ = fmt.Fprintf(cliCtx.App.Writer, "\n\n")
+
+	selectors := make([]string, 0, len(m.Selectors)+1)
+	selectors = append(selectors, "Name|Provider|Config")
+	for _, selector := range m.Selectors {
+		selectors = append(
+			selectors,
+			fmt.Sprintf("%s|%s|%s", selector.Name, selector.Provider, selector.Config),
+		)
+	}
+	_, _ = fmt.Fprint(cliCtx.App.Writer, helper.FormatList(selectors))
 	_, _ = fmt.Fprintf(cliCtx.App.Writer, "\n\n")
 
 	ruleList := make([]string, 0, len(m.Rules)+1)
