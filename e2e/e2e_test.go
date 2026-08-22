@@ -281,6 +281,32 @@ func waitForNomadHealth(ctx context.Context, port int, timeout time.Duration) er
 	}
 }
 
+// waitForServerHealth waits for the Attila server to become available.
+func waitForServerHealth(ctx context.Context, port int, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	start := time.Now()
+	for {
+		if err := ctx.Err(); err != nil {
+			return fmt.Errorf("server health check timed out for port %d after %v", port, time.Since(start))
+		}
+
+		resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/v1alpha1/regions", port))
+		// Accept any HTTP response (even 4xx/5xx) as long as it's not a connection error.
+		if err == nil {
+			resp.Body.Close()
+			return nil
+		}
+
+		time.Sleep(200 * time.Millisecond)
+
+		if time.Since(start) < 2*time.Second {
+			continue
+		}
+	}
+}
+
 func TestE2E(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -322,9 +348,11 @@ func TestE2E(t *testing.T) {
 
 	must.NoError(t, srv.build(ctx, projRoot))
 
-	err = srv.start(ctx)
-	must.NoError(t, err)
+	// Start the Attila server and wait for it HTTP API to be responsive.
+	must.NoError(t, srv.start(ctx))
 	defer srv.stop(t)
+
+	must.NoError(t, waitForServerHealth(ctx, 8080, 30*time.Second))
 
 	// Create euw1 and euw2 regions within Attila.
 	euw1RegionCreate, err := runCLI(ctx, atBin, "region", "create", attilaRegionEUW1Path)
