@@ -33,6 +33,8 @@ func NewRouter(logger *zap.Logger, accessLevel string, stateStore store.State, n
 			nomadController: nomadController,
 			state:           stateStore,
 		}.routes())
+
+		r.Mount("/system", systemEndpoint{}.routes())
 	})
 
 	return r
