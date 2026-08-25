@@ -129,7 +129,7 @@ Quotas Exhauted                     = <none>
 You can then run the registration using the generated plan which will perform the Nomad job
 registration.
 ```console
-$ ../../bin/attila job register plan run 01M04MMT6V257F8RFBYEHW8GJB nomad_job.nomad.hcl
+$ ../../bin/attila job register plan run 01M04MMT6V257F8RFBYEHW8GJB
 ID            = 01M04MRB1VWFHHKQY4SJA11SAV
 Num Regions   = 1
 Job ID        = example

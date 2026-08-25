@@ -44,7 +44,7 @@ func NewPlanner(logger *zap.Logger, req *PlannerReq) *Planner {
 			zap.String("job_id", *req.Job.ID),
 			zap.String("job_namespace", *req.Job.Namespace),
 		).Named("job_plan"),
-		plan:  domain.NewJobRegisterPlan(*req.Job.ID, *req.Job.Namespace),
+		plan:  domain.NewJobRegisterPlan(req.Job),
 		state: req.State,
 	}
 }

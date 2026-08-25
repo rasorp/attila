@@ -9,10 +9,9 @@ import (
 )
 
 type JobRegisterPlan struct {
-	ID           ulid.ULID                         `json:"id"`
-	JobID        string                            `json:"job_id"`
-	JobNamespace string                            `json:"job_namespace"`
-	Regions      map[string]*JobRegisterRegionPlan `json:"regions"`
+	ID      ulid.ULID                         `json:"id"`
+	Job     *api.Job                          `json:"job"`
+	Regions map[string]*JobRegisterRegionPlan `json:"regions"`
 }
 
 type JobRegisterRegionPlan struct {
@@ -20,12 +19,11 @@ type JobRegisterRegionPlan struct {
 	Plan   *api.JobPlanResponse `json:"plan"`
 }
 
-func NewJobRegisterPlan(jobID, jobNamespace string) *JobRegisterPlan {
+func NewJobRegisterPlan(job *api.Job) *JobRegisterPlan {
 	return &JobRegisterPlan{
-		ID:           ulid.Make(),
-		JobID:        jobID,
-		JobNamespace: jobNamespace,
-		Regions:      make(map[string]*JobRegisterRegionPlan),
+		ID:      ulid.Make(),
+		Job:     job,
+		Regions: make(map[string]*JobRegisterRegionPlan),
 	}
 }
 
@@ -44,16 +42,16 @@ type JobRegisterPlanRun struct {
 }
 
 type JobRegisterRegionPlanRun struct {
-	Region string                   `json:"region"`
-	Run    *api.JobRegisterResponse `json:"run"`
-	Error  error                    `json:"error"`
+	Region       string                   `json:"region"`
+	RegisterResp *api.JobRegisterResponse `json:"register_response"`
+	Error        error                    `json:"error"`
 }
 
-func NewJobRegisterPlanRun(jobID, jobNamespace string) *JobRegisterPlanRun {
+func NewJobRegisterPlanRun(job *api.Job) *JobRegisterPlanRun {
 	return &JobRegisterPlanRun{
 		ID:           ulid.Make(),
-		JobID:        jobID,
-		JobNamespace: jobNamespace,
+		JobID:        *job.ID,
+		JobNamespace: *job.Namespace,
 		Regions:      make(map[string]*JobRegisterRegionPlanRun),
 	}
 }
@@ -64,7 +62,7 @@ func (j *JobRegisterPlanRun) AddRegion(regionName string, regResp *api.JobRegist
 	if err != nil {
 		runResp.Error = err
 	} else {
-		runResp.Run = regResp
+		runResp.RegisterResp = regResp
 	}
 
 	j.Regions[regionName] = &runResp

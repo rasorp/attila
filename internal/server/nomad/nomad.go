@@ -5,23 +5,45 @@ package nomad
 
 import (
 	"github.com/hashicorp/nomad/api"
-	"github.com/oklog/ulid/v2"
 
 	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/store"
 )
 
-// Controller
+// Controller is the composite interface that combines all sub-controllers,
+// providing a single entry point for clients to interact with Nomad region
+// management, topology queries, and job registration planning/execution.
 type Controller interface {
 	ClientController
+	JobRegistrationController
+	TopologyController
+}
 
-	// JobRegistrationPlanCreate
+// JobRegistrationPlanRunReq is the request payload passed to the
+// controller's JobRegistrationPlanRun method to execute (apply) a
+// previously computed job registration plan.
+type JobRegistrationPlanRunReq struct {
+	Plan *domain.JobRegisterPlan
+}
+
+// JobRegistrationPlanRunResp is the response object used when the controller
+// has executed a run of a Nomad job registration plan.
+type JobRegistrationPlanRunResp struct {
+	Run *domain.JobRegisterPlanRun
+}
+
+// JobRegistrationController is the interface that defines how Attila performs
+// job registration actions with the backend Nomad regions in mind.
+type JobRegistrationController interface {
+
+	// JobRegistrationPlanCreate analyzes the incoming Nomad job against current
+	// cluster state and existing registrations to produce a registration plan.
 	JobRegistrationPlanCreate(job *api.Job, store store.State) (*domain.JobRegisterPlan, error)
 
-	// JobRegistrationRun
-	JobRegistrationRun(planID ulid.ULID, job *api.Job, store store.State) (*domain.JobRegisterPlanRun, error)
-
-	TopologyController
+	// JobRegistrationPlanRun executes the given job registration plan by applying
+	// each planned deployment action against the target Nomad regions. It returns
+	// a result describing what was actually done.
+	JobRegistrationPlanRun(*JobRegistrationPlanRunReq) (*JobRegistrationPlanRunResp, error)
 }
 
 type ClientController interface {
