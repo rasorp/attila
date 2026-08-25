@@ -138,8 +138,7 @@ func (s *nomadServer) start(t *testing.T, ctx context.Context) {
 	stdout, _ := s.cmd.StdoutPipe()
 	stderr, _ := s.cmd.StderrPipe()
 
-	err = s.cmd.Start()
-	must.NoError(t, err)
+	must.NoError(t, s.cmd.Start())
 
 	go func() { _, _ = io.Copy(io.Discard, stdout) }()
 	go func() { _, _ = io.Copy(io.Discard, stderr) }()
@@ -415,7 +414,7 @@ func TestE2E(t *testing.T) {
 	fields := parsePlanOutput(planCreate2)
 	must.NotEq(t, "", fields.ID)
 
-	planRun, err := runCLI(ctx, atBin, "job", "register", "plan", "run", fields.ID, nomadJobPath)
+	planRun, err := runCLI(ctx, atBin, "job", "register", "plan", "run", fields.ID)
 	must.NoError(t, err)
 	must.StrContains(t, planRun, "Num Regions")
 	must.StrContains(t, planRun, "euw1")

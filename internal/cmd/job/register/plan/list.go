@@ -48,7 +48,7 @@ func formatPlanList(plans []*api.JobRegisterPlan) string {
 	for _, plan := range plans {
 		out = append(out, fmt.Sprintf(
 			"%s|%s|%s",
-			plan.ID, plan.JobID, plan.JobNamespace))
+			plan.ID, *plan.Job.ID, *plan.Job.Namespace))
 	}
 
 	return helper.FormatList(out)

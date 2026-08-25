@@ -45,8 +45,8 @@ func outputPlan(cliCtx *cli.Context, plan *api.JobRegisterPlan) {
 	_, _ = fmt.Fprint(cliCtx.App.Writer, helper.FormatKV([]string{
 		fmt.Sprintf("ID|%s", plan.ID),
 		fmt.Sprintf("Num Regions|%v", len(plan.Regions)),
-		fmt.Sprintf("Job ID|%s", plan.JobID),
-		fmt.Sprintf("Job Namespace|%s", plan.JobNamespace),
+		fmt.Sprintf("Job ID|%s", *plan.Job.ID),
+		fmt.Sprintf("Job Namespace|%s", *plan.Job.Namespace),
 	}))
 	_, _ = fmt.Fprint(cliCtx.App.Writer, "\n")
 

@@ -122,8 +122,8 @@ func jobRegisterPlanTableSchema() *memdb.TableSchema {
 				Unique:       true,
 				Indexer: &memdb.CompoundIndex{
 					Indexes: []memdb.Indexer{
-						&memdb.StringFieldIndex{Field: "JobNamespace"},
-						&memdb.StringFieldIndex{Field: "JobID"},
+						&index.StringPtrFieldIndex{Field: "Job.Namespace"},
+						&index.StringPtrFieldIndex{Field: "Job.ID"},
 					},
 				},
 			},

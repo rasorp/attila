@@ -4,65 +4,48 @@
 package job
 
 import (
-	"go.uber.org/zap"
-
 	"github.com/hashicorp/nomad/api"
-	"github.com/oklog/ulid/v2"
+	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
-	"github.com/rasorp/attila/internal/store"
 )
 
 type Register struct {
-	logger *zap.Logger
-
-	clients *client.Clients
-	job     *api.Job
-	state   store.State
-	planID  ulid.ULID
-
+	logger    *zap.Logger
+	clients   *client.Clients
+	plan      *domain.JobRegisterPlan
 	runResult *domain.JobRegisterPlanRun
 }
 
 type RegisterReq struct {
 	Clients *client.Clients
-	Job     *api.Job
-	PlanID  ulid.ULID
-	State   store.State
+	Plan    *domain.JobRegisterPlan
 }
 
 func NewRegister(logger *zap.Logger, req *RegisterReq) *Register {
 	return &Register{
 		clients: req.Clients,
-		job:     req.Job,
 		logger: logger.With(
-			zap.String("job_id", *req.Job.ID),
-			zap.String("job_namespace", *req.Job.Namespace),
-			zap.String("plan_id", req.PlanID.String()),
+			zap.String("job_id", *req.Plan.Job.ID),
+			zap.String("job_namespace", *req.Plan.Job.Namespace),
+			zap.String("plan_id", req.Plan.ID.String()),
 		).Named("job_register"),
-		planID:    req.PlanID,
-		runResult: domain.NewJobRegisterPlanRun(*req.Job.ID, *req.Job.Namespace),
-		state:     req.State,
+		plan:      req.Plan,
+		runResult: domain.NewJobRegisterPlanRun(req.Plan.Job),
 	}
 }
 
 func (r *Register) Run() (*domain.JobRegisterPlanRun, error) {
-	planResp, err := r.state.JobRegister().Plan().Get(&store.JobRegisterPlanGetReq{ID: r.planID})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, plannedRegion := range planResp.Plan.Regions {
-		if err := r.runPlannedRegion(plannedRegion); err != nil {
+	for _, plannedRegion := range r.plan.Regions {
+		if err := r.runPlannedRegion(plannedRegion, r.plan.Job); err != nil {
 			return nil, err
 		}
 	}
-
 	return r.runResult, nil
 }
 
-func (r *Register) runPlannedRegion(regionPlan *domain.JobRegisterRegionPlan) error {
+func (r *Register) runPlannedRegion(regionPlan *domain.JobRegisterRegionPlan, apiJob *api.Job) error {
 	apiClient, err := r.clients.Get(regionPlan.Region)
 	if err != nil {
 		return err
@@ -79,7 +62,7 @@ func (r *Register) runPlannedRegion(regionPlan *domain.JobRegisterRegionPlan) er
 		zap.Uint64("job_modify_index", registerOpts.ModifyIndex),
 	)
 
-	registerResp, _, err := apiClient.Jobs().RegisterOpts(r.job, &registerOpts, nil)
+	registerResp, _, err := apiClient.Jobs().RegisterOpts(apiJob, &registerOpts, nil)
 	r.runResult.AddRegion(regionPlan.Region, registerResp, err)
 
 	if err != nil {

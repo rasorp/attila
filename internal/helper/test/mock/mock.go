@@ -4,6 +4,7 @@
 package mock
 
 import (
+	"github.com/hashicorp/nomad/api"
 	"github.com/oklog/ulid/v2"
 
 	"github.com/rasorp/attila/internal/domain"
@@ -63,9 +64,46 @@ func JobRegistrationMethod() *domain.JobRegisterMethod {
 
 func JobRegistrationPlan() *domain.JobRegisterPlan {
 	return &domain.JobRegisterPlan{
-		ID:           ulid.Make(),
-		JobID:        "example",
-		JobNamespace: "default",
+		ID: ulid.Make(),
+		Job: &api.Job{
+			Name:      new("example"),
+			Namespace: new("default"),
+			TaskGroups: []*api.TaskGroup{
+				{
+					Name: new("cache"),
+					Networks: []*api.NetworkResource{
+						{
+							Mode: "bridge",
+							DynamicPorts: []api.Port{
+								{
+									Label: "db",
+									To:    6379,
+								},
+							},
+						},
+					},
+					Tasks: []*api.Task{
+						{
+							Name:   "redis",
+							Driver: "docker",
+							Config: map[string]any{
+								"image":          "redis:7",
+								"ports":          []any{string("db")},
+								"auth_soft_fail": true,
+							},
+							Identity: &api.WorkloadIdentity{
+								Env:  true,
+								File: true,
+							},
+							Resources: &api.Resources{
+								CPU:      new(500),
+								MemoryMB: new(256),
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

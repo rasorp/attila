@@ -279,10 +279,9 @@ func (a *JobRegisterRules) List(ctx context.Context) (*JobRegisterRuleListResp, 
 }
 
 type JobRegisterPlan struct {
-	ID           ulid.ULID                         `json:"id"`
-	JobID        string                            `json:"job_id"`
-	JobNamespace string                            `json:"job_namespace"`
-	Regions      map[string]*JobRegisterRegionPlan `json:"regions"`
+	ID      ulid.ULID                         `json:"id"`
+	Job     *api.Job                          `json:"job"`
+	Regions map[string]*JobRegisterRegionPlan `json:"regions"`
 }
 
 type JobRegisterRegionPlan struct {
@@ -298,9 +297,9 @@ type JobRegisterPlanRun struct {
 }
 
 type JobRegisterRegionPlanRun struct {
-	Region string                   `json:"region"`
-	Run    *api.JobRegisterResponse `json:"run"`
-	Error  error                    `json:"error"`
+	Region       string                   `json:"region"`
+	RegisterResp *api.JobRegisterResponse `json:"register_response"`
+	Error        error                    `json:"error"`
 }
 
 type JobRegisterPlanCreateReq struct {
@@ -332,8 +331,7 @@ type JobRegisterPlanListResp struct {
 }
 
 type JobsRegisterPlanRunReq struct {
-	ID  ulid.ULID `json:"id"`
-	Job *api.Job  `json:"job"`
+	ID ulid.ULID `json:"id"`
 }
 
 type JobsRegisterPlanRunResp struct {

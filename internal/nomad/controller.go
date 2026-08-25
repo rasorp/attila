@@ -5,7 +5,6 @@ package nomad
 
 import (
 	"github.com/hashicorp/nomad/api"
-	"github.com/oklog/ulid/v2"
 	"go.uber.org/zap"
 
 	"github.com/rasorp/attila/internal/domain"
@@ -45,21 +44,29 @@ func (c *Controller) RegionSet(name string, client *api.Client) {
 
 func (c *Controller) RegionNum() int { return c.clients.Num() }
 
+// JobRegistrationPlanCreate analyzes the incoming Nomad job against current
+// cluster state and existing registrations to produce a registration plan.
 func (c *Controller) JobRegistrationPlanCreate(apiJob *api.Job, state store.State) (*domain.JobRegisterPlan, error) {
-	return job.NewPlanner(c.logger, &job.PlannerReq{
+	plan, err := job.NewPlanner(c.logger, &job.PlannerReq{
 		Clients: c.clients,
 		Job:     apiJob,
 		State:   state,
 	}).Run()
+	return plan, err
 }
 
-func (c *Controller) JobRegistrationRun(planID ulid.ULID, apiJob *api.Job, state store.State) (*domain.JobRegisterPlanRun, error) {
-	return job.NewRegister(c.logger, &job.RegisterReq{
-		Clients: c.clients,
-		Job:     apiJob,
-		PlanID:  planID,
-		State:   state,
-	}).Run()
+// JobRegistrationPlanRun executes the given job registration plan by applying
+// each planned deployment action against the target Nomad regions. It returns
+// a result describing what was actually done.
+func (c *Controller) JobRegistrationPlanRun(
+	req *nomad.JobRegistrationPlanRunReq,
+) (*nomad.JobRegistrationPlanRunResp, error) {
+
+	result, err := job.NewRegister(c.logger, &job.RegisterReq{Clients: c.clients, Plan: req.Plan}).Run()
+	if err != nil {
+		return nil, err
+	}
+	return &nomad.JobRegistrationPlanRunResp{Run: result}, nil
 }
 
 func (c *Controller) GetTopologies() []*nomad.Overview {
