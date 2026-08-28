@@ -172,7 +172,7 @@ func (s *attilaServer) build(ctx context.Context, projRoot string) error {
 }
 
 func (s *attilaServer) start(ctx context.Context) error {
-	s.cmd = exec.CommandContext(ctx, s.bin, "server", "run", "--state-memory-enabled")
+	s.cmd = exec.CommandContext(ctx, s.bin, "server", "run", "--state-provider=mem")
 	stdout, _ := s.cmd.StdoutPipe()
 	stderr, _ := s.cmd.StderrPipe()
 
