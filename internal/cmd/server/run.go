@@ -9,7 +9,6 @@ import (
 	"github.com/rasorp/attila/internal/cmd/helper"
 	"github.com/rasorp/attila/internal/helper/file"
 	"github.com/rasorp/attila/internal/server"
-	storebackend "github.com/rasorp/attila/internal/store/backend"
 )
 
 func runCommand() *cli.Command {
@@ -73,20 +72,10 @@ func runFlags() []cli.Flag {
 			Value: false,
 			Usage: "Add file:line of the caller to each log entry",
 		},
-		&cli.BoolFlag{
-			Name:  "state-memory-enabled",
-			Value: false,
-			Usage: "Enable the memory state backend",
-		},
-		&cli.BoolFlag{
-			Name:  "state-file-enabled",
-			Value: false,
-			Usage: "Enable the file state backend",
-		},
 		&cli.StringFlag{
-			Name:  "state-file-path",
-			Value: "",
-			Usage: "The local directory to store state",
+			Name:  "state-provider",
+			Value: "mem",
+			Usage: "The state store provider to use",
 		},
 	}
 }
@@ -132,15 +121,8 @@ func generateRunConfig(cliCtx *cli.Context) (*server.Config, error) {
 		defaultCfg.Log.IncludeLine = &line
 	}
 
-	if memoryState := cliCtx.Bool("state-memory-enabled"); memoryState {
-		defaultCfg.State.Memory = &storebackend.MemoryConfig{Enable: &memoryState}
-	}
-
-	if fileState := cliCtx.Bool("state-file-enabled"); fileState {
-		defaultCfg.State.File = &storebackend.FileConfig{
-			Enable: &fileState,
-			Path:   cliCtx.String("state-file-path"),
-		}
+	if stateProvider := cliCtx.String("state-provider"); stateProvider != "" {
+		defaultCfg.State.Provider = stateProvider
 	}
 
 	if err := defaultCfg.Validate(); err != nil {

@@ -49,7 +49,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
 
-	backend, err := storebackend.NewBackend(cfg.State)
+	backend, err := storebackend.New(cfg.State)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup state: %w", err)
 	}

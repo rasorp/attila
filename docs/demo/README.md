@@ -23,7 +23,7 @@ $ nomad agent -dev -config=nomad_euw2.hcl
 ## Run and Configure Attila
 In a third terminal, start Attila.
 ```console
-$ ../../bin/attila server run --state-memory-enabled
+$ ../../bin/attila server run --state-provider=mem
 ```
 
 Create the two Attila region definitions.
