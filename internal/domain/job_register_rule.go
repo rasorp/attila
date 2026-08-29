@@ -9,6 +9,45 @@ import (
 	jobsdk "github.com/rasorp/attila/pkg/job"
 )
 
+type JobRegisterRuleState interface {
+	Create(*JobRegisterRuleCreateReq) (*JobRegisterRuleCreateResp, StateError)
+	Delete(*JobRegisterRuleDeleteReq) (*JobRegisterRuleDeleteResp, StateError)
+	Get(*JobRegisterRuleGetReq) (*JobRegisterRuleGetResp, StateError)
+	List(*JobRegisterRuleListReq) (*JobRegisterRuleListResp, StateError)
+}
+
+type JobRegisterRuleCreateReq struct {
+	Rule *JobRegisterRule `json:"rule"`
+}
+
+type JobRegisterRuleCreateResp struct {
+	Rule *JobRegisterRule `json:"rule"`
+}
+
+type JobRegisterRuleDeleteReq struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type JobRegisterRuleDeleteResp struct{}
+
+type JobRegisterRuleGetReq struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type JobRegisterRuleGetResp struct {
+	Rule *JobRegisterRule `json:"rule"`
+}
+
+type JobRegisterRuleListReq struct {
+	Namespace string `json:"namespace"`
+}
+
+type JobRegisterRuleListResp struct {
+	Rules []*JobRegisterRule `json:"rules"`
+}
+
 type JobRegisterRule struct {
 	Name           string                         `json:"name"`
 	Namespace      string                         `json:"namespace"`

@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/rasorp/attila/internal/domain"
-	"github.com/rasorp/attila/internal/store"
 )
 
 type JobRegisterMethodCreateResp struct {
@@ -36,7 +35,7 @@ type JobRegisterMethodListResp struct {
 }
 
 type jobsRegisterMethodsEndpoint struct {
-	state store.State
+	state domain.State
 }
 
 func (j jobsRegisterMethodsEndpoint) routes() chi.Router {
@@ -89,7 +88,7 @@ func (j jobsRegisterMethodsEndpoint) create(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	stateReq := store.JobRegisterMethodCreateReq{Method: &methodObj}
+	stateReq := domain.JobRegisterMethodCreateReq{Method: &methodObj}
 
 	methodCreateResp, err := j.state.JobRegister().Method().Create(&stateReq)
 	if err != nil {
@@ -106,7 +105,7 @@ func (j jobsRegisterMethodsEndpoint) create(w http.ResponseWriter, r *http.Reque
 
 func (j jobsRegisterMethodsEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 
-	stateReq := store.JobRegisterMethodDeleteReq{
+	stateReq := domain.JobRegisterMethodDeleteReq{
 		Name:      r.Context().Value("method-name").(string),
 		Namespace: reqNamespace(r),
 	}
@@ -125,7 +124,7 @@ func (j jobsRegisterMethodsEndpoint) delete(w http.ResponseWriter, r *http.Reque
 
 func (a jobsRegisterMethodsEndpoint) get(w http.ResponseWriter, r *http.Request) {
 
-	stateReq := store.JobRegisterMethodGetReq{
+	stateReq := domain.JobRegisterMethodGetReq{
 		Name:      r.Context().Value("method-name").(string),
 		Namespace: reqNamespace(r),
 	}
@@ -145,7 +144,7 @@ func (a jobsRegisterMethodsEndpoint) get(w http.ResponseWriter, r *http.Request)
 
 func (j jobsRegisterMethodsEndpoint) list(w http.ResponseWriter, r *http.Request) {
 
-	stateResp, err := j.state.JobRegister().Method().List(&store.JobRegisterMethodListReq{Namespace: reqNamespace(r)})
+	stateResp, err := j.state.JobRegister().Method().List(&domain.JobRegisterMethodListReq{Namespace: reqNamespace(r)})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)

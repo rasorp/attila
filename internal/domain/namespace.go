@@ -10,6 +10,41 @@ import (
 	"slices"
 )
 
+type NamespaceState interface {
+	Create(*NamespaceCreateReq) (*NamespaceCreateResp, StateError)
+	Delete(*NamespaceDeleteReq) (*NamespaceDeleteResp, StateError)
+	Get(*NamespaceGetReq) (*NamespaceGetResp, StateError)
+	List(*NamespaceListReq) (*NamespaceListResp, StateError)
+}
+
+type NamespaceCreateReq struct {
+	Namespace *Namespace
+}
+
+type NamespaceCreateResp struct {
+	Namespace *Namespace `json:"namespace"`
+}
+
+type NamespaceDeleteReq struct {
+	Name string
+}
+
+type NamespaceDeleteResp struct{}
+
+type NamespaceGetReq struct {
+	Name string
+}
+
+type NamespaceGetResp struct {
+	Namespace *Namespace `json:"namespace"`
+}
+
+type NamespaceListReq struct{}
+
+type NamespaceListResp struct {
+	Namespaces []*Namespace `json:"namespaces"`
+}
+
 // Namespace represents a logical grouping for job registration.
 type Namespace struct {
 	Name        string   `json:"name"`

@@ -14,7 +14,6 @@ import (
 
 	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/register/region/picker"
-	"github.com/rasorp/attila/internal/store"
 	jobsdk "github.com/rasorp/attila/pkg/job"
 )
 
@@ -38,7 +37,7 @@ type JobRegisterRuleListResp struct {
 }
 
 type jobsRegisterRulesEndpoint struct {
-	state store.State
+	state domain.State
 }
 
 func (j jobsRegisterRulesEndpoint) routes() chi.Router {
@@ -104,7 +103,7 @@ func (j jobsRegisterRulesEndpoint) create(w http.ResponseWriter, r *http.Request
 
 	ruleObj.Metadata = domain.NewMetadata()
 
-	stateReq := store.JobRegisterRuleCreateReq{Rule: &ruleObj}
+	stateReq := domain.JobRegisterRuleCreateReq{Rule: &ruleObj}
 
 	ruleCreateResp, err := j.state.JobRegister().Rule().Create(&stateReq)
 	if err != nil {
@@ -121,7 +120,7 @@ func (j jobsRegisterRulesEndpoint) create(w http.ResponseWriter, r *http.Request
 
 func (j jobsRegisterRulesEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 
-	stateReq := store.JobRegisterRuleDeleteReq{
+	stateReq := domain.JobRegisterRuleDeleteReq{
 		Name:      r.Context().Value("rule-name").(string),
 		Namespace: reqNamespace(r),
 	}
@@ -140,7 +139,7 @@ func (j jobsRegisterRulesEndpoint) delete(w http.ResponseWriter, r *http.Request
 
 func (j jobsRegisterRulesEndpoint) get(w http.ResponseWriter, r *http.Request) {
 
-	stateReq := store.JobRegisterRuleGetReq{
+	stateReq := domain.JobRegisterRuleGetReq{
 		Name:      r.Context().Value("rule-name").(string),
 		Namespace: reqNamespace(r),
 	}
@@ -160,7 +159,7 @@ func (j jobsRegisterRulesEndpoint) get(w http.ResponseWriter, r *http.Request) {
 
 func (j jobsRegisterRulesEndpoint) list(w http.ResponseWriter, r *http.Request) {
 
-	ruleListResp, err := j.state.JobRegister().Rule().List(&store.JobRegisterRuleListReq{Namespace: reqNamespace(r)})
+	ruleListResp, err := j.state.JobRegister().Rule().List(&domain.JobRegisterRuleListReq{Namespace: reqNamespace(r)})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)

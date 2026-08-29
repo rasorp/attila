@@ -7,21 +7,21 @@ import (
 	"github.com/hashicorp/nomad/api"
 	"go.uber.org/zap"
 
+	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
 	"github.com/rasorp/attila/internal/nomad/job"
 	"github.com/rasorp/attila/internal/nomad/topology"
 	"github.com/rasorp/attila/internal/server/nomad"
-	"github.com/rasorp/attila/internal/store"
 )
 
 type Controller struct {
 	logger   *zap.Logger
 	clients  *client.Clients
-	store    store.State
+	store    domain.State
 	topology nomad.TopologyController
 }
 
-func NewController(logger *zap.Logger, stateStore store.State) nomad.Controller {
+func NewController(logger *zap.Logger, stateStore domain.State) nomad.Controller {
 	clientStore := client.New(logger)
 	topologyController := topology.New(logger, clientStore)
 

@@ -17,19 +17,19 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
+	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/logger"
 	nomadControler "github.com/rasorp/attila/internal/nomad"
 	serverHTTP "github.com/rasorp/attila/internal/server/http"
 	"github.com/rasorp/attila/internal/server/nomad"
-	"github.com/rasorp/attila/internal/store"
-	storebackend "github.com/rasorp/attila/internal/store/backend"
+	"github.com/rasorp/attila/internal/state"
 )
 
 type Server struct {
 	baseLogger   *zap.Logger
 	serverLogger *zap.Logger
 	srvs         []*httpServer
-	state        store.State
+	state        domain.State
 
 	// nomadController
 	nomadController nomad.Controller
@@ -49,7 +49,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
 
-	backend, err := storebackend.New(cfg.State)
+	backend, err := state.New(cfg.State)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup state: %w", err)
 	}

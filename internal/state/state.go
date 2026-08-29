@@ -1,21 +1,19 @@
 // Copyright James Rasell 2025, 2026
 // SPDX-License-Identifier: Apache-2.0
 
-package backend
+package state
 
 import (
 	"errors"
 
 	"github.com/rasorp/attila/internal/domain"
-	"github.com/rasorp/attila/internal/server/state"
-	"github.com/rasorp/attila/internal/store"
-	"github.com/rasorp/attila/internal/store/mem"
+	"github.com/rasorp/attila/internal/state/mem"
 )
 
-func New(cfg *Config) (store.State, error) {
+func New(cfg *Config) (domain.State, error) {
 
 	var (
-		backend store.State
+		backend domain.State
 		err     error
 	)
 
@@ -32,15 +30,15 @@ func New(cfg *Config) (store.State, error) {
 	return backend, err
 }
 
-func namespaceInit(backend store.State) error {
+func namespaceInit(backend domain.State) error {
 
-	_, err := backend.Namespace().Get(&state.NamespaceGetReq{Name: domain.NamespaceDefaultName})
+	_, err := backend.Namespace().Get(&domain.NamespaceGetReq{Name: domain.NamespaceDefaultName})
 	if err == nil {
 		return nil
 	}
 
 	if err.StatusCode() == 404 {
-		if _, err := backend.Namespace().Create(&state.NamespaceCreateReq{Namespace: domain.DefaultNamespace()}); err == nil {
+		if _, err := backend.Namespace().Create(&domain.NamespaceCreateReq{Namespace: domain.DefaultNamespace()}); err == nil {
 			return nil
 		}
 	}

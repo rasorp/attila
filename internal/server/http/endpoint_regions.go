@@ -14,7 +14,6 @@ import (
 
 	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/server/nomad"
-	"github.com/rasorp/attila/internal/store"
 )
 
 type RegionCreateReq struct {
@@ -41,7 +40,7 @@ type RegionListResp struct {
 }
 
 type regionsEndpoint struct {
-	state           store.State
+	state           domain.State
 	nomadController nomad.Controller
 }
 
@@ -89,7 +88,7 @@ func (a regionsEndpoint) create(w http.ResponseWriter, r *http.Request) {
 
 	req.Region.Metadata = domain.NewMetadata()
 
-	stateReq := store.RegionCreateReq{Region: req.Region}
+	stateReq := domain.RegionCreateReq{Region: req.Region}
 
 	stateResp, err := a.state.Region().Create(&stateReq)
 	if err != nil {
@@ -108,7 +107,7 @@ func (a regionsEndpoint) create(w http.ResponseWriter, r *http.Request) {
 func (a regionsEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 	regionName := r.Context().Value("region-name").(string)
 
-	stateReq := store.RegionDeleteReq{RegionName: regionName}
+	stateReq := domain.RegionDeleteReq{RegionName: regionName}
 
 	_, err := a.state.Region().Delete(&stateReq)
 	if err != nil {
@@ -126,7 +125,7 @@ func (a regionsEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 func (a regionsEndpoint) get(w http.ResponseWriter, r *http.Request) {
 	regionName := r.Context().Value("region-name").(string)
 
-	stateReq := store.RegionGetReq{RegionName: regionName}
+	stateReq := domain.RegionGetReq{RegionName: regionName}
 
 	regionGetResp, err := a.state.Region().Get(&stateReq)
 	if err != nil {
@@ -142,7 +141,7 @@ func (a regionsEndpoint) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a regionsEndpoint) list(w http.ResponseWriter, r *http.Request) {
-	regionListResp, err := a.state.Region().List(&store.RegionListReq{})
+	regionListResp, err := a.state.Region().List(&domain.RegionListReq{})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
