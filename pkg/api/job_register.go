@@ -13,6 +13,7 @@ import (
 
 type JobRegisterMethod struct {
 	Name      string                       `hcl:"name" json:"name"`
+	Namespace string                       `hcl:"namespace,optional" json:"namespace"`
 	Selectors []*JobRegisterMethodSelector `hcl:"selector,block" json:"selectors"`
 	Rules     []*JobRegisterMethodRuleLink `hcl:"rule,block" json:"rules"`
 	Metadata  *Metadata                    `hcl:"metadata" json:"metadata"`
@@ -40,6 +41,7 @@ type JobRegisterMethodSelector struct {
 
 type JobRegisterMethodStub struct {
 	Name      string                           `json:"name"`
+	Namespace string                           `json:"namespace"`
 	Selectors []*JobRegisterMethodSelectorStub `json:"selectors"`
 }
 
@@ -73,11 +75,19 @@ func (c *Client) JobRegisterMethods() *JobRegisterMethods {
 }
 
 func (a *JobRegisterMethods) Create(
-	ctx context.Context, method *JobRegisterMethod) (*JobRegisterMethodCreateResp, *Response, error) {
+	ctx context.Context,
+	method *JobRegisterMethod,
+	writeOpts *WriteOpts,
+) (*JobRegisterMethodCreateResp, *Response, error) {
 
 	var regionCreateResp JobRegisterMethodCreateResp
 
-	req, err := a.client.NewRequest(http.MethodPost, "/v1alpha1/jobs/register/methods", method)
+	req, err := a.client.NewRequest(
+		http.MethodPost,
+		"/v1alpha1/jobs/register/methods",
+		method,
+		writeOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -90,9 +100,18 @@ func (a *JobRegisterMethods) Create(
 	return &regionCreateResp, resp, nil
 }
 
-func (a *JobRegisterMethods) Delete(ctx context.Context, name string) (*Response, error) {
+func (a *JobRegisterMethods) Delete(
+	ctx context.Context,
+	name string,
+	writeOpts *WriteOpts,
+) (*Response, error) {
 
-	req, err := a.client.NewRequest(http.MethodDelete, "/v1alpha1/jobs/register/methods/"+name, nil)
+	req, err := a.client.NewRequest(
+		http.MethodDelete,
+		"/v1alpha1/jobs/register/methods/"+name,
+		nil,
+		writeOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -106,11 +125,19 @@ func (a *JobRegisterMethods) Delete(ctx context.Context, name string) (*Response
 }
 
 func (a *JobRegisterMethods) Get(
-	ctx context.Context, name string) (*JobRegisterMethodGetResp, *Response, error) {
+	ctx context.Context,
+	name string,
+	queryOpts *QueryOpts,
+) (*JobRegisterMethodGetResp, *Response, error) {
 
 	var methodGetResp JobRegisterMethodGetResp
 
-	req, err := a.client.NewRequest(http.MethodGet, "/v1alpha1/jobs/register/methods/"+name, nil)
+	req, err := a.client.NewRequest(
+		http.MethodGet,
+		"/v1alpha1/jobs/register/methods/"+name,
+		nil,
+		queryOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -123,11 +150,19 @@ func (a *JobRegisterMethods) Get(
 	return &methodGetResp, resp, nil
 }
 
-func (a *JobRegisterMethods) List(ctx context.Context) (*JobRegisterMethodListResp, *Response, error) {
+func (a *JobRegisterMethods) List(
+	ctx context.Context,
+	queryOpts *QueryOpts,
+) (*JobRegisterMethodListResp, *Response, error) {
 
 	var methodListResp JobRegisterMethodListResp
 
-	req, err := a.client.NewRequest(http.MethodGet, "/v1alpha1/jobs/register/methods", nil)
+	req, err := a.client.NewRequest(
+		http.MethodGet,
+		"/v1alpha1/jobs/register/methods",
+		nil,
+		queryOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -142,6 +177,7 @@ func (a *JobRegisterMethods) List(ctx context.Context) (*JobRegisterMethodListRe
 
 type JobRegisterRule struct {
 	Name           string                          `hcl:"name" json:"name"`
+	Namespace      string                          `hcl:"namespace,optional" json:"namespace"`
 	RegionContexts []*JobRegisterRuleRegionContext `hcl:"region_context,block" json:"region_contexts"`
 	RegionPickers  []*JobRegisterRegionPicker      `hcl:"region_picker,block" json:"region_pickers"`
 	Metadata       *Metadata                       `hcl:"metadata" json:"metadata"`
@@ -187,6 +223,7 @@ type JobRegisterRegionPicker struct {
 
 type JobRegisterRuleStub struct {
 	Name           string                         `json:"name"`
+	Namespace      string                         `json:"namespace"`
 	RegionContexts []JobRegisterRuleRegionContext `json:"region_contexts"`
 }
 
@@ -211,11 +248,19 @@ func (c *Client) JobRegisterRules() *JobRegisterRules {
 }
 
 func (a *JobRegisterRules) Create(
-	ctx context.Context, rule *JobRegisterRule) (*JobRegisterRuleCreateResp, *Response, error) {
+	ctx context.Context,
+	rule *JobRegisterRule,
+	writeOpts *WriteOpts,
+) (*JobRegisterRuleCreateResp, *Response, error) {
 
 	var ruleCreateResp JobRegisterRuleCreateResp
 
-	req, err := a.client.NewRequest(http.MethodPost, "/v1alpha1/jobs/register/rules", rule)
+	req, err := a.client.NewRequest(
+		http.MethodPost,
+		"/v1alpha1/jobs/register/rules",
+		rule,
+		writeOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -228,9 +273,18 @@ func (a *JobRegisterRules) Create(
 	return &ruleCreateResp, resp, nil
 }
 
-func (a *JobRegisterRules) Delete(ctx context.Context, name string) (*Response, error) {
+func (a *JobRegisterRules) Delete(
+	ctx context.Context,
+	name string,
+	writeOpts *WriteOpts,
+) (*Response, error) {
 
-	req, err := a.client.NewRequest(http.MethodDelete, "/v1alpha1/jobs/register/rules/"+name, nil)
+	req, err := a.client.NewRequest(
+		http.MethodDelete,
+		"/v1alpha1/jobs/register/rules/"+name,
+		nil,
+		writeOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -244,11 +298,19 @@ func (a *JobRegisterRules) Delete(ctx context.Context, name string) (*Response, 
 }
 
 func (a *JobRegisterRules) Get(
-	ctx context.Context, name string) (*JobRegisterRuleGetResp, *Response, error) {
+	ctx context.Context,
+	name string,
+	queryOpts *QueryOpts,
+) (*JobRegisterRuleGetResp, *Response, error) {
 
 	var ruleGetResp JobRegisterRuleGetResp
 
-	req, err := a.client.NewRequest(http.MethodGet, "/v1alpha1/jobs/register/rules/"+name, nil)
+	req, err := a.client.NewRequest(
+		http.MethodGet,
+		"/v1alpha1/jobs/register/rules/"+name,
+		nil,
+		queryOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -261,11 +323,19 @@ func (a *JobRegisterRules) Get(
 	return &ruleGetResp, resp, nil
 }
 
-func (a *JobRegisterRules) List(ctx context.Context) (*JobRegisterRuleListResp, *Response, error) {
+func (a *JobRegisterRules) List(
+	ctx context.Context,
+	queryOpts *QueryOpts,
+) (*JobRegisterRuleListResp, *Response, error) {
 
 	var ruleListResp JobRegisterRuleListResp
 
-	req, err := a.client.NewRequest(http.MethodGet, "/v1alpha1/jobs/register/rules", nil)
+	req, err := a.client.NewRequest(
+		http.MethodGet,
+		"/v1alpha1/jobs/register/rules",
+		nil,
+		queryOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -279,9 +349,10 @@ func (a *JobRegisterRules) List(ctx context.Context) (*JobRegisterRuleListResp, 
 }
 
 type JobRegisterPlan struct {
-	ID      ulid.ULID                         `json:"id"`
-	Job     *api.Job                          `json:"job"`
-	Regions map[string]*JobRegisterRegionPlan `json:"regions"`
+	ID        ulid.ULID                         `json:"id"`
+	Namespace string                            `json:"namespace"`
+	Job       *api.Job                          `json:"job"`
+	Regions   map[string]*JobRegisterRegionPlan `json:"regions"`
 }
 
 type JobRegisterRegionPlan struct {
@@ -348,11 +419,19 @@ func (c *Client) JobRegisterPlans() *JobRegisterPlans {
 }
 
 func (j *JobRegisterPlans) Create(
-	ctx context.Context, req *JobRegisterPlanCreateReq) (*JobRegisterPlanCreateResp, *Response, error) {
+	ctx context.Context,
+	req *JobRegisterPlanCreateReq,
+	writeOpts *WriteOpts,
+) (*JobRegisterPlanCreateResp, *Response, error) {
 
 	var resp JobRegisterPlanCreateResp
 
-	httpReq, err := j.client.NewRequest(http.MethodPost, "/v1alpha1/jobs/register/plans", req)
+	httpReq, err := j.client.NewRequest(
+		http.MethodPost,
+		"/v1alpha1/jobs/register/plans",
+		req,
+		writeOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -365,9 +444,18 @@ func (j *JobRegisterPlans) Create(
 	return &resp, httpResp, nil
 }
 
-func (j *JobRegisterPlans) Delete(ctx context.Context, req *JobRegisterPlanDeleteReq) (*Response, error) {
+func (j *JobRegisterPlans) Delete(
+	ctx context.Context,
+	req *JobRegisterPlanDeleteReq,
+	writeOpts *WriteOpts,
+) (*Response, error) {
 
-	httpReq, err := j.client.NewRequest(http.MethodDelete, "/v1alpha1/jobs/register/plans/"+req.ID.String(), nil)
+	httpReq, err := j.client.NewRequest(
+		http.MethodDelete,
+		"/v1alpha1/jobs/register/plans/"+req.ID.String(),
+		nil,
+		writeOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -381,11 +469,19 @@ func (j *JobRegisterPlans) Delete(ctx context.Context, req *JobRegisterPlanDelet
 }
 
 func (j *JobRegisterPlans) Get(
-	ctx context.Context, req *JobRegisterPlanGetReq) (*JobRegisterPlanGetResp, *Response, error) {
+	ctx context.Context,
+	req *JobRegisterPlanGetReq,
+	queryOpts *QueryOpts,
+) (*JobRegisterPlanGetResp, *Response, error) {
 
 	var resp JobRegisterPlanGetResp
 
-	httpReq, err := j.client.NewRequest(http.MethodGet, "/v1alpha1/jobs/register/plans/"+req.ID.String(), nil)
+	httpReq, err := j.client.NewRequest(
+		http.MethodGet,
+		"/v1alpha1/jobs/register/plans/"+req.ID.String(),
+		nil,
+		queryOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -399,11 +495,19 @@ func (j *JobRegisterPlans) Get(
 }
 
 func (j *JobRegisterPlans) List(
-	ctx context.Context, req *JobRegisterPlanListReq) (*JobRegisterPlanListResp, *Response, error) {
+	ctx context.Context,
+	req *JobRegisterPlanListReq,
+	queryOpts *QueryOpts,
+) (*JobRegisterPlanListResp, *Response, error) {
 
 	var resp JobRegisterPlanListResp
 
-	httpReq, err := j.client.NewRequest(http.MethodGet, "/v1alpha1/jobs/register/plans", req)
+	httpReq, err := j.client.NewRequest(
+		http.MethodGet,
+		"/v1alpha1/jobs/register/plans",
+		req,
+		queryOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -417,13 +521,19 @@ func (j *JobRegisterPlans) List(
 }
 
 func (j *JobRegisterPlans) Run(
-	ctx context.Context, req *JobsRegisterPlanRunReq) (*JobsRegisterPlanRunResp, *Response, error) {
+	ctx context.Context,
+	req *JobsRegisterPlanRunReq,
+	queryOpts *QueryOpts,
+) (*JobsRegisterPlanRunResp, *Response, error) {
 
 	var resp JobsRegisterPlanRunResp
 
-	path := "/v1alpha1/jobs/register/plans/" + req.ID.String() + "/run"
-
-	httpReq, err := j.client.NewRequest(http.MethodPost, path, req)
+	httpReq, err := j.client.NewRequest(
+		http.MethodPost,
+		"/v1alpha1/jobs/register/plans/"+req.ID.String()+"/run",
+		req,
+		queryOpts.SetOpts(),
+	)
 	if err != nil {
 		return nil, nil, err
 	}

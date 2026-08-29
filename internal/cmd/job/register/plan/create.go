@@ -4,7 +4,6 @@
 package plan
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -22,7 +21,7 @@ func createCommand() *cli.Command {
 		Category:  "plan",
 		Args:      true,
 		UsageText: "attila job register plan create [options] [job-spec]",
-		Flags:     append(helper.ClientFlags(), createFlags()...),
+		Flags:     append(helper.ClientNamespaceFlags(), createFlags()...),
 		Action: func(cliCtx *cli.Context) error {
 
 			if numArgs := cliCtx.Args().Len(); numArgs != 1 {
@@ -63,9 +62,11 @@ func createCommand() *cli.Command {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			req := api.JobRegisterPlanCreateReq{Job: parsedJobspec}
-
-			resp, _, err := client.JobRegisterPlans().Create(context.Background(), &req)
+			resp, _, err := client.JobRegisterPlans().Create(
+				cliCtx.Context,
+				&api.JobRegisterPlanCreateReq{Job: parsedJobspec},
+				&api.WriteOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError(createCLIErrorMsg, err), 1)
 			}

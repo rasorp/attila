@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/nomad/api"
 
 	"github.com/rasorp/attila/internal/domain"
-	"github.com/rasorp/attila/internal/store"
 )
 
 // Controller is the composite interface that combines all sub-controllers,
@@ -17,6 +16,15 @@ type Controller interface {
 	ClientController
 	JobRegistrationController
 	TopologyController
+}
+
+type JobRegistrationPlanCreateReq struct {
+	Job       *api.Job
+	Namespace string
+}
+
+type JobRegistrationPlanCreateResp struct {
+	Plan *domain.JobRegisterPlan
 }
 
 // JobRegistrationPlanRunReq is the request payload passed to the
@@ -38,7 +46,7 @@ type JobRegistrationController interface {
 
 	// JobRegistrationPlanCreate analyzes the incoming Nomad job against current
 	// cluster state and existing registrations to produce a registration plan.
-	JobRegistrationPlanCreate(job *api.Job, store store.State) (*domain.JobRegisterPlan, error)
+	JobRegistrationPlanCreate(*JobRegistrationPlanCreateReq) (*JobRegistrationPlanCreateResp, error)
 
 	// JobRegistrationPlanRun executes the given job registration plan by applying
 	// each planned deployment action against the target Nomad regions. It returns

@@ -25,20 +25,24 @@ type JobRegisterPlanCreateResp struct {
 }
 
 type JobRegisterPlanDeleteReq struct {
-	ID ulid.ULID `json:"id"`
+	ID        ulid.ULID `json:"id"`
+	Namespace string    `json:"namespace"`
 }
 
 type JobRegisterPlanDeleteResp struct{}
 
 type JobRegisterPlanGetReq struct {
-	ID ulid.ULID `json:"id"`
+	ID        ulid.ULID `json:"id"`
+	Namespace string    `json:"namespace"`
 }
 
 type JobRegisterPlanGetResp struct {
 	Plan *domain.JobRegisterPlan `json:"plan"`
 }
 
-type JobRegisterPlanListReq struct{}
+type JobRegisterPlanListReq struct {
+	Namespace string `json:"namespace"`
+}
 
 type JobRegisterPlanListResp struct {
 	Plans []*domain.JobRegisterPlan `json:"plans"`

@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	addressCLIFlag = "address"
+	addressCLIFlag   = "address"
+	namespaceCLIFlag = "namespace"
 )
 
 func ClientFlags() []cli.Flag {
@@ -20,6 +21,23 @@ func ClientFlags() []cli.Flag {
 			Name:    addressCLIFlag,
 			Value:   "http://127.0.0.1:8080",
 			Usage:   "Attila server address to make API requests to",
+		},
+	}
+}
+
+func ClientNamespaceFlags() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Aliases: []string{"a"},
+			Name:    addressCLIFlag,
+			Value:   "http://127.0.0.1:8080",
+			Usage:   "Attila server address to make API requests to",
+		},
+		&cli.StringFlag{
+			Aliases: []string{"n"},
+			Name:    namespaceCLIFlag,
+			Value:   "default",
+			Usage:   "Attila namespace to make API requests to",
 		},
 	}
 }
@@ -34,3 +52,5 @@ func ClientConfigFromFlags(ctx *cli.Context) *api.Config {
 
 	return defaultConfig
 }
+
+func NamespaceFromFlags(ctx *cli.Context) string { return ctx.String(namespaceCLIFlag) }

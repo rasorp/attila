@@ -6,6 +6,7 @@ package mem
 import (
 	"github.com/hashicorp/go-memdb"
 
+	"github.com/rasorp/attila/internal/server/state"
 	"github.com/rasorp/attila/internal/store"
 )
 
@@ -22,6 +23,7 @@ func New() (store.State, error) {
 	return &Store{db: db}, nil
 }
 
+func (s *Store) Namespace() state.Namespace          { return &Namespace{db: s.db} }
 func (s *Store) Region() store.RegionState           { return &Region{db: s.db} }
 func (s *Store) JobRegister() store.JobRegisterState { return &JobRegister{db: s.db} }
 func (s *Store) Name() string                        { return "mem" }

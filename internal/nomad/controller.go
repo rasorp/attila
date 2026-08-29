@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/nomad/api"
 	"go.uber.org/zap"
 
-	"github.com/rasorp/attila/internal/domain"
 	"github.com/rasorp/attila/internal/nomad/client"
 	"github.com/rasorp/attila/internal/nomad/job"
 	"github.com/rasorp/attila/internal/nomad/topology"
@@ -18,16 +17,18 @@ import (
 type Controller struct {
 	logger   *zap.Logger
 	clients  *client.Clients
+	store    store.State
 	topology nomad.TopologyController
 }
 
-func NewController(logger *zap.Logger) nomad.Controller {
+func NewController(logger *zap.Logger, stateStore store.State) nomad.Controller {
 	clientStore := client.New(logger)
 	topologyController := topology.New(logger, clientStore)
 
 	return &Controller{
 		logger:   logger,
 		clients:  clientStore,
+		store:    stateStore,
 		topology: topologyController,
 	}
 }
@@ -46,13 +47,19 @@ func (c *Controller) RegionNum() int { return c.clients.Num() }
 
 // JobRegistrationPlanCreate analyzes the incoming Nomad job against current
 // cluster state and existing registrations to produce a registration plan.
-func (c *Controller) JobRegistrationPlanCreate(apiJob *api.Job, state store.State) (*domain.JobRegisterPlan, error) {
-	plan, err := job.NewPlanner(c.logger, &job.PlannerReq{
-		Clients: c.clients,
-		Job:     apiJob,
-		State:   state,
-	}).Run()
-	return plan, err
+func (c *Controller) JobRegistrationPlanCreate(
+	req *nomad.JobRegistrationPlanCreateReq,
+) (*nomad.JobRegistrationPlanCreateResp, error) {
+	plan, err := job.NewPlanner(
+		c.logger,
+		&job.PlannerReq{
+			Clients:   c.clients,
+			Namespace: req.Namespace,
+			Job:       req.Job,
+			State:     c.store,
+		},
+	).Run()
+	return &nomad.JobRegistrationPlanCreateResp{Plan: plan}, err
 }
 
 // JobRegistrationPlanRun executes the given job registration plan by applying

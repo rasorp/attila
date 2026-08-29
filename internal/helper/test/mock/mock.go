@@ -44,7 +44,8 @@ func Region() *domain.Region {
 
 func JobRegistrationMethod() *domain.JobRegisterMethod {
 	return &domain.JobRegisterMethod{
-		Name: "mock-" + ulid.Make().String(),
+		Name:      "mock-" + ulid.Make().String(),
+		Namespace: domain.NamespaceDefaultName,
 		Selectors: []*jobsdk.MethodSelectorConfig{
 			{
 				MethodSelectorBaseConfig: &jobsdk.MethodSelectorBaseConfig{
@@ -109,7 +110,8 @@ func JobRegistrationPlan() *domain.JobRegisterPlan {
 
 func JobRegistrationRule() *domain.JobRegisterRule {
 	return &domain.JobRegisterRule{
-		Name: "mock-" + ulid.Make().String(),
+		Name:      "mock-" + ulid.Make().String(),
+		Namespace: domain.NamespaceDefaultName,
 		RegionContexts: []domain.JobRegisterRuleRegionContext{
 			{Kind: domain.JobRegisterRuleContextKindNamespace},
 			{Kind: domain.JobRegisterRuleContextKindNodepool},

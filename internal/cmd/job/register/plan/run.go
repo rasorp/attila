@@ -4,7 +4,6 @@
 package plan
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -22,7 +21,7 @@ func runCommand() *cli.Command {
 		Category:  "plan",
 		Args:      true,
 		UsageText: "attila job register plan run [options] [plan-id]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			cliArgs := cliCtx.Args()
@@ -39,9 +38,11 @@ func runCommand() *cli.Command {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			req := api.JobsRegisterPlanRunReq{ID: id}
-
-			resp, _, err := client.JobRegisterPlans().Run(context.Background(), &req)
+			resp, _, err := client.JobRegisterPlans().Run(
+				cliCtx.Context,
+				&api.JobsRegisterPlanRunReq{ID: id},
+				&api.QueryOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError(runCLIErrorMsg, err), 1)
 			}

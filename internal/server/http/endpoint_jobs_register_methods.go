@@ -62,9 +62,17 @@ func (j jobsRegisterMethodsEndpoint) create(w http.ResponseWriter, r *http.Reque
 	var methodObj domain.JobRegisterMethod
 
 	if err := json.NewDecoder(r.Body).Decode(&methodObj); err != nil {
-		httpWriteResponseError(w, NewResponseError(fmt.Errorf("failed to decode object: %w", err), http.StatusBadRequest))
+		httpWriteResponseError(
+			w,
+			NewResponseError(fmt.Errorf("failed to decode object: %w", err), http.StatusBadRequest),
+		)
 		return
 	}
+
+	httpRequestNamespace := reqNamespace(r)
+
+	//
+	methodObj.SetDefaults(httpRequestNamespace)
 
 	if err := methodObj.Validate(); err != nil {
 		respErr := NewResponseError(err, http.StatusBadRequest)
@@ -72,7 +80,14 @@ func (j jobsRegisterMethodsEndpoint) create(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	methodObj.Metadata = domain.NewMetadata()
+	//
+	if !namespacesMatch(methodObj.Namespace, httpRequestNamespace) {
+		httpWriteResponseError(
+			w,
+			NewResponseError(errors.New("object and request namespace mismatch"), http.StatusConflict),
+		)
+		return
+	}
 
 	stateReq := store.JobRegisterMethodCreateReq{Method: &methodObj}
 
@@ -90,9 +105,11 @@ func (j jobsRegisterMethodsEndpoint) create(w http.ResponseWriter, r *http.Reque
 }
 
 func (j jobsRegisterMethodsEndpoint) delete(w http.ResponseWriter, r *http.Request) {
-	methodName := r.Context().Value("method-name").(string)
 
-	stateReq := store.JobRegisterMethodDeleteReq{Name: methodName}
+	stateReq := store.JobRegisterMethodDeleteReq{
+		Name:      r.Context().Value("method-name").(string),
+		Namespace: reqNamespace(r),
+	}
 
 	_, err := j.state.JobRegister().Method().Delete(&stateReq)
 	if err != nil {
@@ -107,9 +124,11 @@ func (j jobsRegisterMethodsEndpoint) delete(w http.ResponseWriter, r *http.Reque
 }
 
 func (a jobsRegisterMethodsEndpoint) get(w http.ResponseWriter, r *http.Request) {
-	methodName := r.Context().Value("method-name").(string)
 
-	stateReq := store.JobRegisterMethodGetReq{Name: methodName}
+	stateReq := store.JobRegisterMethodGetReq{
+		Name:      r.Context().Value("method-name").(string),
+		Namespace: reqNamespace(r),
+	}
 
 	methodGetResp, err := a.state.JobRegister().Method().Get(&stateReq)
 	if err != nil {
@@ -125,7 +144,8 @@ func (a jobsRegisterMethodsEndpoint) get(w http.ResponseWriter, r *http.Request)
 }
 
 func (j jobsRegisterMethodsEndpoint) list(w http.ResponseWriter, r *http.Request) {
-	stateResp, err := j.state.JobRegister().Method().List(&store.JobRegisterMethodListReq{})
+
+	stateResp, err := j.state.JobRegister().Method().List(&store.JobRegisterMethodListReq{Namespace: reqNamespace(r)})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)

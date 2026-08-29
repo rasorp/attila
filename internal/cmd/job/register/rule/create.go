@@ -4,7 +4,6 @@
 package rule
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
@@ -25,7 +24,7 @@ func createCommand() *cli.Command {
 		Category:  "rule",
 		Args:      true,
 		UsageText: "attila job register rule create [options] [rule-spec]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			if numArgs := cliCtx.Args().Len(); numArgs != 1 {
@@ -44,7 +43,11 @@ func createCommand() *cli.Command {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			ruleCreateResp, _, err := client.JobRegisterRules().Create(context.Background(), &ruleObj)
+			ruleCreateResp, _, err := client.JobRegisterRules().Create(
+				cliCtx.Context,
+				&ruleObj,
+				&api.WriteOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError(createErrorMsg, err), 1)
 			}

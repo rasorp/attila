@@ -21,20 +21,24 @@ type JobRegisterRuleCreateResp struct {
 }
 
 type JobRegisterRuleDeleteReq struct {
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 type JobRegisterRuleDeleteResp struct{}
 
 type JobRegisterRuleGetReq struct {
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 type JobRegisterRuleGetResp struct {
 	Rule *domain.JobRegisterRule `json:"rule"`
 }
 
-type JobRegisterRuleListReq struct{}
+type JobRegisterRuleListReq struct {
+	Namespace string `json:"namespace"`
+}
 
 type JobRegisterRuleListResp struct {
 	Rules []*domain.JobRegisterRule `json:"rules"`

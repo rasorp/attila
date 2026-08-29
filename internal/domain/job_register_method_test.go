@@ -21,7 +21,8 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 		{
 			name: "one rule and one selector",
 			inputMethod: &JobRegisterMethod{
-				Name: "test-method",
+				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
 				Rules: []*JobRegisterMethodRuleLink{
 					{Name: "my-rule"},
 				},
@@ -37,7 +38,8 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 		{
 			name: "multiple rules and selectors",
 			inputMethod: &JobRegisterMethod{
-				Name: "test-method",
+				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
 				Rules: []*JobRegisterMethodRuleLink{
 					{Name: "rule-a"},
 					{Name: "rule-b"},
@@ -61,8 +63,9 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 		{
 			name: "no rules",
 			inputMethod: &JobRegisterMethod{
-				Name:  "test-method",
-				Rules: nil,
+				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
+				Rules:     nil,
 				Selectors: []*jobsdk.MethodSelectorConfig{
 					{
 						MethodSelectorBaseConfig: &jobsdk.MethodSelectorBaseConfig{
@@ -76,8 +79,9 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 		{
 			name: "empty rules",
 			inputMethod: &JobRegisterMethod{
-				Name:  "test-method",
-				Rules: []*JobRegisterMethodRuleLink{},
+				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
+				Rules:     []*JobRegisterMethodRuleLink{},
 				Selectors: []*jobsdk.MethodSelectorConfig{
 					{
 						MethodSelectorBaseConfig: &jobsdk.MethodSelectorBaseConfig{
@@ -91,8 +95,9 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 		{
 			name: "invalid rule name",
 			inputMethod: &JobRegisterMethod{
-				Name:  "test-method",
-				Rules: []*JobRegisterMethodRuleLink{{Name: ""}},
+				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
+				Rules:     []*JobRegisterMethodRuleLink{{Name: ""}},
 				Selectors: []*jobsdk.MethodSelectorConfig{
 					{
 						MethodSelectorBaseConfig: &jobsdk.MethodSelectorBaseConfig{
@@ -106,7 +111,8 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 		{
 			name: "valid and invalid rules",
 			inputMethod: &JobRegisterMethod{
-				Name: "test-method",
+				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
 				Rules: []*JobRegisterMethodRuleLink{
 					{Name: "good"},
 					{Name: ""},
@@ -127,6 +133,7 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 			name: "no selectors",
 			inputMethod: &JobRegisterMethod{
 				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
 				Rules:     []*JobRegisterMethodRuleLink{{Name: "rule"}},
 				Selectors: nil,
 			},
@@ -136,6 +143,7 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 			name: "empty selectors",
 			inputMethod: &JobRegisterMethod{
 				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
 				Rules:     []*JobRegisterMethodRuleLink{{Name: "rule"}},
 				Selectors: []*jobsdk.MethodSelectorConfig{},
 			},
@@ -144,8 +152,9 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 		{
 			name: "invalid selector name",
 			inputMethod: &JobRegisterMethod{
-				Name:  "test-method",
-				Rules: []*JobRegisterMethodRuleLink{{Name: "rule"}},
+				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
+				Rules:     []*JobRegisterMethodRuleLink{{Name: "rule"}},
 				Selectors: []*jobsdk.MethodSelectorConfig{
 					{
 						MethodSelectorBaseConfig: &jobsdk.MethodSelectorBaseConfig{
@@ -159,8 +168,9 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 		{
 			name: "invalid selector provider",
 			inputMethod: &JobRegisterMethod{
-				Name:  "test-method",
-				Rules: []*JobRegisterMethodRuleLink{{Name: "rule"}},
+				Name:      "test-method",
+				Namespace: NamespaceDefaultName,
+				Rules:     []*JobRegisterMethodRuleLink{{Name: "rule"}},
 				Selectors: []*jobsdk.MethodSelectorConfig{{
 					MethodSelectorBaseConfig: &jobsdk.MethodSelectorBaseConfig{Name: "bad-provider", Provider: "bogus"},
 				}},
@@ -170,8 +180,9 @@ func TestJobRegisterMethodValidate(t *testing.T) {
 		{
 			name: "invalid rule and selectors",
 			inputMethod: &JobRegisterMethod{
-				Name:  "broken-method",
-				Rules: []*JobRegisterMethodRuleLink{{Name: ""}},
+				Name:      "broken-method",
+				Namespace: NamespaceDefaultName,
+				Rules:     []*JobRegisterMethodRuleLink{{Name: ""}},
 				Selectors: []*jobsdk.MethodSelectorConfig{
 					{
 						MethodSelectorBaseConfig: &jobsdk.MethodSelectorBaseConfig{

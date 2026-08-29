@@ -79,18 +79,24 @@ func (j jobsRegisterPlansEndpoint) create(w http.ResponseWriter, r *http.Request
 	var req JobsRegisterPlansCreateReq
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpWriteResponseError(w,
+		httpWriteResponseError(
+			w,
 			NewResponseError(fmt.Errorf("failed to decode object: %w", err), http.StatusBadRequest))
 		return
 	}
 
-	controllerResp, err := j.nomadController.JobRegistrationPlanCreate(req.Job, j.state)
+	controllerResp, err := j.nomadController.JobRegistrationPlanCreate(
+		&nomad.JobRegistrationPlanCreateReq{
+			Job:       req.Job,
+			Namespace: reqNamespace(r),
+		},
+	)
 	if err != nil {
 		httpWriteResponseError(w, NewResponseError(err, http.StatusInternalServerError))
 		return
 	}
 
-	stateResp, stateErr := j.state.JobRegister().Plan().Create(&store.JobRegisterPlanCreateReq{Plan: controllerResp})
+	stateResp, stateErr := j.state.JobRegister().Plan().Create(&store.JobRegisterPlanCreateReq{Plan: controllerResp.Plan})
 	if stateErr != nil {
 		httpWriteResponseError(w, NewResponseError(stateErr.Err(), stateErr.StatusCode()))
 		return
@@ -105,7 +111,10 @@ func (j jobsRegisterPlansEndpoint) create(w http.ResponseWriter, r *http.Request
 func (j jobsRegisterPlansEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 	planID := r.Context().Value("id").(ulid.ULID)
 
-	stateReq := store.JobRegisterPlanDeleteReq{ID: planID}
+	stateReq := store.JobRegisterPlanDeleteReq{
+		ID:        planID,
+		Namespace: reqNamespace(r),
+	}
 
 	_, err := j.state.JobRegister().Plan().Delete(&stateReq)
 	if err != nil {
@@ -120,7 +129,10 @@ func (j jobsRegisterPlansEndpoint) delete(w http.ResponseWriter, r *http.Request
 func (j jobsRegisterPlansEndpoint) get(w http.ResponseWriter, r *http.Request) {
 	planID := r.Context().Value("id").(ulid.ULID)
 
-	stateReq := store.JobRegisterPlanGetReq{ID: planID}
+	stateReq := store.JobRegisterPlanGetReq{
+		ID:        planID,
+		Namespace: reqNamespace(r),
+	}
 
 	stateResp, err := j.state.JobRegister().Plan().Get(&stateReq)
 	if err != nil {
@@ -134,7 +146,8 @@ func (j jobsRegisterPlansEndpoint) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (j jobsRegisterPlansEndpoint) list(w http.ResponseWriter, r *http.Request) {
-	stateResp, err := j.state.JobRegister().Plan().List(&store.JobRegisterPlanListReq{})
+
+	stateResp, err := j.state.JobRegister().Plan().List(&store.JobRegisterPlanListReq{Namespace: reqNamespace(r)})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
@@ -150,8 +163,14 @@ func (j jobsRegisterPlansEndpoint) list(w http.ResponseWriter, r *http.Request) 
 func (j jobsRegisterPlansEndpoint) run(w http.ResponseWriter, r *http.Request) {
 
 	planID := r.Context().Value("id").(ulid.ULID)
+	requestNS := reqNamespace(r)
 
-	planResp, err := j.state.JobRegister().Plan().Get(&store.JobRegisterPlanGetReq{ID: planID})
+	planResp, err := j.state.JobRegister().Plan().Get(
+		&store.JobRegisterPlanGetReq{
+			ID:        planID,
+			Namespace: requestNS,
+		},
+	)
 	if err != nil {
 		httpWriteResponseError(w, NewResponseError(err.Err(), err.StatusCode()))
 		return
@@ -170,7 +189,7 @@ func (j jobsRegisterPlansEndpoint) run(w http.ResponseWriter, r *http.Request) {
 		responseCode = http.StatusInternalServerError
 	}
 
-	stateReq := store.JobRegisterPlanDeleteReq{ID: planID}
+	stateReq := store.JobRegisterPlanDeleteReq{ID: planID, Namespace: requestNS}
 
 	if _, err := j.state.JobRegister().Plan().Delete(&stateReq); err != nil {
 		j.logger.Error("failed to delete job register plan", zap.Error(err))

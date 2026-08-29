@@ -21,20 +21,24 @@ type JobRegisterMethodCreateResp struct {
 }
 
 type JobRegisterMethodDeleteReq struct {
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 type JobRegisterMethodDeleteResp struct{}
 
 type JobRegisterMethodGetReq struct {
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 type JobRegisterMethodGetResp struct {
 	Method *domain.JobRegisterMethod `json:"method"`
 }
 
-type JobRegisterMethodListReq struct{}
+type JobRegisterMethodListReq struct {
+	Namespace string `json:"namespace"`
+}
 
 type JobRegisterMethodListResp struct {
 	Methods []*domain.JobRegisterMethod `json:"methods"`

@@ -19,22 +19,11 @@ func NewRouter(logger *zap.Logger, accessLevel string, stateStore store.State, n
 	r.Use(loggerMiddleware(logger, accessLevel))
 
 	r.Route("/v1alpha1", func(r chi.Router) {
-
-		r.Mount(
-			"/topologies",
-			topologiesEndpoint{
-				nomadController: nomadController,
-			}.routes(),
-		)
-
 		r.Mount("/jobs", jobRouter(logger, stateStore, nomadController))
-
-		r.Mount("/regions", regionsEndpoint{
-			nomadController: nomadController,
-			state:           stateStore,
-		}.routes())
-
+		r.Mount("/namespaces", namespacesEndpoint{state: stateStore}.routes())
+		r.Mount("/regions", regionsEndpoint{nomadController: nomadController, state: stateStore}.routes())
 		r.Mount("/system", systemEndpoint{}.routes())
+		r.Mount("/topologies", topologiesEndpoint{nomadController: nomadController}.routes())
 	})
 
 	return r

@@ -4,7 +4,6 @@
 package rule
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -21,12 +20,15 @@ func listCommand() *cli.Command {
 		Category:  "rule",
 		Args:      false,
 		UsageText: "attila job register rule list [options]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			ruleListResp, _, err := client.JobRegisterRules().List(context.Background())
+			ruleListResp, _, err := client.JobRegisterRules().List(
+				cliCtx.Context,
+				&api.QueryOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError("failed to list Attila job registration rules", err), 1)
 			}

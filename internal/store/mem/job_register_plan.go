@@ -58,23 +58,26 @@ func (j *JobRegisterPlan) Get(req *store.JobRegisterPlanGetReq) (*store.JobRegis
 	txn := j.db.Txn(false)
 	defer txn.Abort()
 
-	existingPlan, err := txn.First(jobRegisterPlanTableName, indexID, req.ID)
+	existingPlanRaw, err := txn.First(jobRegisterPlanTableName, indexID, req.ID)
 	if err != nil {
 		return nil, store.NewErrorResp(fmt.Errorf("failed to read job registration plan: %w", err), 500)
 	}
-	if existingPlan == nil {
+
+	existingPlan := existingPlanRaw.(*domain.JobRegisterPlan)
+
+	if existingPlan == nil || existingPlan.Namespace != req.Namespace {
 		return nil, store.NewErrorResp(fmt.Errorf("job registration plan %q not found", req.ID.String()), 404)
 	}
 
 	txn.Commit()
-	return &store.JobRegisterPlanGetResp{Plan: existingPlan.(*domain.JobRegisterPlan)}, nil
+	return &store.JobRegisterPlanGetResp{Plan: existingPlan}, nil
 }
 
 func (j *JobRegisterPlan) List(req *store.JobRegisterPlanListReq) (*store.JobRegisterPlanListResp, *store.ErrorResp) {
 	txn := j.db.Txn(false)
 	defer txn.Abort()
 
-	iter, err := txn.Get(jobRegisterPlanTableName, indexID)
+	iter, err := txn.Get(jobRegisterPlanTableName, indexID, req.Namespace)
 	if err != nil {
 		return nil, store.NewErrorResp(fmt.Errorf("failed to list job registration plans: %w", err), 500)
 	}

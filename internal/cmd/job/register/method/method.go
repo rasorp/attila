@@ -31,6 +31,7 @@ func Command() *cli.Command {
 func outputMethod(cliCtx *cli.Context, m *api.JobRegisterMethod) {
 	_, _ = fmt.Fprint(cliCtx.App.Writer, helper.FormatKV([]string{
 		fmt.Sprintf("Name|%s", m.Name),
+		fmt.Sprintf("Namespace|%s", m.Namespace),
 		fmt.Sprintf("Create Time|%s", helper.FormatTime(m.Metadata.CreateTime)),
 		fmt.Sprintf("Update Time|%s", helper.FormatTime(m.Metadata.UpdateTime)),
 	}))

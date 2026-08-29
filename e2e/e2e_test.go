@@ -54,7 +54,8 @@ api {
 `
 
 const attilaJobRegRuleConfig = `
-name = "europe-platform"
+name      = "europe-platform"
+namespace = "default"
 
 region_context { kind = "namespace" }
 
@@ -76,7 +77,8 @@ region_picker "platform-namespace" {
 `
 
 const attilaJobRegMethodConfig = `
-name = "europe-platform"
+name      = "europe-platform"
+namespace = "default"
 
 selector "namespace_platform" {
   provider = "filter"

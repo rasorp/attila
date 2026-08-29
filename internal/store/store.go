@@ -3,8 +3,11 @@
 
 package store
 
+import "github.com/rasorp/attila/internal/server/state"
+
 type State interface {
 	JobRegister() JobRegisterState
+	Namespace() state.Namespace
 	Region() RegionState
 	Name() string
 }
