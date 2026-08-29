@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/go-memdb"
 
-	"github.com/rasorp/attila/internal/store/mem/index"
+	"github.com/rasorp/attila/internal/state/mem/index"
 )
 
 const (

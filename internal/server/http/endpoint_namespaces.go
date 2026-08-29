@@ -13,8 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/rasorp/attila/internal/domain"
-	"github.com/rasorp/attila/internal/server/state"
-	"github.com/rasorp/attila/internal/store"
 )
 
 type NamespaceCreateReq struct {
@@ -41,7 +39,7 @@ type NamespaceListResp struct {
 }
 
 type namespacesEndpoint struct {
-	state store.State
+	state domain.State
 }
 
 func (n namespacesEndpoint) routes() chi.Router {
@@ -101,7 +99,7 @@ func (n namespacesEndpoint) create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	stateReq := state.NamespaceCreateReq{Namespace: req.Namespace}
+	stateReq := domain.NamespaceCreateReq{Namespace: req.Namespace}
 
 	stateResp, stateErr := n.state.Namespace().Create(&stateReq)
 	if stateErr != nil {
@@ -127,7 +125,7 @@ func (n namespacesEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := n.state.Namespace().Delete(&state.NamespaceDeleteReq{Name: namespaceName})
+	_, err := n.state.Namespace().Delete(&domain.NamespaceDeleteReq{Name: namespaceName})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)
@@ -142,7 +140,7 @@ func (n namespacesEndpoint) delete(w http.ResponseWriter, r *http.Request) {
 func (n namespacesEndpoint) get(w http.ResponseWriter, r *http.Request) {
 	namespaceName := r.Context().Value("namespace-name").(string)
 
-	stateReq := state.NamespaceGetReq{Name: namespaceName}
+	stateReq := domain.NamespaceGetReq{Name: namespaceName}
 
 	namespaceGetResp, err := n.state.Namespace().Get(&stateReq)
 	if err != nil {
@@ -158,7 +156,7 @@ func (n namespacesEndpoint) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n namespacesEndpoint) list(w http.ResponseWriter, r *http.Request) {
-	namespaceListResp, err := n.state.Namespace().List(&state.NamespaceListReq{})
+	namespaceListResp, err := n.state.Namespace().List(&domain.NamespaceListReq{})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)

@@ -8,6 +8,45 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+type JobRegisterPlanState interface {
+	Create(*JobRegisterPlanCreateReq) (*JobRegisterPlanCreateResp, StateError)
+	Delete(*JobRegisterPlanDeleteReq) (*JobRegisterPlanDeleteResp, StateError)
+	Get(*JobRegisterPlanGetReq) (*JobRegisterPlanGetResp, StateError)
+	List(*JobRegisterPlanListReq) (*JobRegisterPlanListResp, StateError)
+}
+
+type JobRegisterPlanCreateReq struct {
+	Plan *JobRegisterPlan
+}
+
+type JobRegisterPlanCreateResp struct {
+	Plan *JobRegisterPlan `json:"plan"`
+}
+
+type JobRegisterPlanDeleteReq struct {
+	ID        ulid.ULID `json:"id"`
+	Namespace string    `json:"namespace"`
+}
+
+type JobRegisterPlanDeleteResp struct{}
+
+type JobRegisterPlanGetReq struct {
+	ID        ulid.ULID `json:"id"`
+	Namespace string    `json:"namespace"`
+}
+
+type JobRegisterPlanGetResp struct {
+	Plan *JobRegisterPlan `json:"plan"`
+}
+
+type JobRegisterPlanListReq struct {
+	Namespace string `json:"namespace"`
+}
+
+type JobRegisterPlanListResp struct {
+	Plans []*JobRegisterPlan `json:"plans"`
+}
+
 type JobRegisterPlan struct {
 	ID        ulid.ULID                         `json:"id"`
 	Namespace string                            `json:"namespace"`

@@ -15,8 +15,6 @@ import (
 	"github.com/rasorp/attila/internal/register/method/selector"
 	"github.com/rasorp/attila/internal/register/region/picker"
 	pickercontext "github.com/rasorp/attila/internal/register/region/picker/context"
-	"github.com/rasorp/attila/internal/server/state"
-	"github.com/rasorp/attila/internal/store"
 	jobsdk "github.com/rasorp/attila/pkg/job"
 )
 
@@ -27,7 +25,7 @@ type Planner struct {
 	clients   *client.Clients
 	job       *api.Job
 	namespace string
-	state     store.State
+	state     domain.State
 
 	plan *domain.JobRegisterPlan
 }
@@ -36,7 +34,7 @@ type PlannerReq struct {
 	Clients   *client.Clients
 	Job       *api.Job
 	Namespace string
-	State     store.State
+	State     domain.State
 }
 
 func NewPlanner(logger *zap.Logger, req *PlannerReq) *Planner {
@@ -55,7 +53,7 @@ func NewPlanner(logger *zap.Logger, req *PlannerReq) *Planner {
 
 func (p *Planner) Run() (*domain.JobRegisterPlan, error) {
 
-	listResp, err := p.state.JobRegister().Method().List(&store.JobRegisterMethodListReq{Namespace: p.namespace})
+	listResp, err := p.state.JobRegister().Method().List(&domain.JobRegisterMethodListReq{Namespace: p.namespace})
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +83,7 @@ func (p *Planner) Run() (*domain.JobRegisterPlan, error) {
 		}
 
 		for _, ruleLink := range method.Rules {
-			regRule, err := p.state.JobRegister().Rule().Get(&store.JobRegisterRuleGetReq{
+			regRule, err := p.state.JobRegister().Rule().Get(&domain.JobRegisterRuleGetReq{
 				Name:      ruleLink.Name,
 				Namespace: p.namespace,
 			})
@@ -102,7 +100,7 @@ func (p *Planner) Run() (*domain.JobRegisterPlan, error) {
 	// Resolve the effective region set for this namespace.
 	var availableRegions []*domain.Region
 
-	refNs, refErr := p.state.Namespace().Get(&state.NamespaceGetReq{Name: p.namespace})
+	refNs, refErr := p.state.Namespace().Get(&domain.NamespaceGetReq{Name: p.namespace})
 	if refErr != nil {
 		return nil, refErr
 	}

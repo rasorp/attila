@@ -10,6 +10,45 @@ import (
 	jobsdk "github.com/rasorp/attila/pkg/job"
 )
 
+type JobRegisterMethodState interface {
+	Create(*JobRegisterMethodCreateReq) (*JobRegisterMethodCreateResp, StateError)
+	Delete(*JobRegisterMethodDeleteReq) (*JobRegisterMethodDeleteResp, StateError)
+	Get(*JobRegisterMethodGetReq) (*JobRegisterMethodGetResp, StateError)
+	List(*JobRegisterMethodListReq) (*JobRegisterMethodListResp, StateError)
+}
+
+type JobRegisterMethodCreateReq struct {
+	Method *JobRegisterMethod `json:"method"`
+}
+
+type JobRegisterMethodCreateResp struct {
+	Method *JobRegisterMethod `json:"method"`
+}
+
+type JobRegisterMethodDeleteReq struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type JobRegisterMethodDeleteResp struct{}
+
+type JobRegisterMethodGetReq struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type JobRegisterMethodGetResp struct {
+	Method *JobRegisterMethod `json:"method"`
+}
+
+type JobRegisterMethodListReq struct {
+	Namespace string `json:"namespace"`
+}
+
+type JobRegisterMethodListResp struct {
+	Methods []*JobRegisterMethod `json:"methods"`
+}
+
 type JobRegisterMethod struct {
 	Name      string                         `json:"name"`
 	Namespace string                         `json:"namespace"`

@@ -11,6 +11,41 @@ import (
 	"github.com/hashicorp/nomad/api"
 )
 
+type RegionState interface {
+	Create(*RegionCreateReq) (*RegionCreateResp, StateError)
+	Delete(*RegionDeleteReq) (*RegionDeleteResp, StateError)
+	Get(*RegionGetReq) (*RegionGetResp, StateError)
+	List(*RegionListReq) (*RegionListResp, StateError)
+}
+
+type RegionCreateReq struct {
+	Region *Region
+}
+
+type RegionCreateResp struct {
+	Region *Region `json:"region"`
+}
+
+type RegionDeleteReq struct {
+	RegionName string
+}
+
+type RegionDeleteResp struct{}
+
+type RegionGetReq struct {
+	RegionName string
+}
+
+type RegionGetResp struct {
+	Region *Region `json:"region"`
+}
+
+type RegionListReq struct{}
+
+type RegionListResp struct {
+	Regions []*Region `json:"regions"`
+}
+
 type Region struct {
 	Name     string       `json:"name"`
 	Group    string       `json:"group"`
