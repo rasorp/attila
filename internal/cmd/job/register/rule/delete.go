@@ -4,7 +4,6 @@
 package rule
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
@@ -20,7 +19,7 @@ func deleteCommand() *cli.Command {
 		Category:  "rule",
 		Args:      true,
 		UsageText: "attila job register rule delete [options] [rule-name]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			if numArgs := cliCtx.Args().Len(); numArgs != 1 {
@@ -31,7 +30,11 @@ func deleteCommand() *cli.Command {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			_, err := client.JobRegisterRules().Delete(context.Background(), cliCtx.Args().First())
+			_, err := client.JobRegisterRules().Delete(
+				cliCtx.Context,
+				cliCtx.Args().First(),
+				&api.WriteOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError("failed to delete Attila job registration rule", err), 1)
 			}

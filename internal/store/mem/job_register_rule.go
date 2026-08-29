@@ -22,12 +22,22 @@ func (j *JobRegisterRule) Create(req *store.JobRegisterRuleCreateReq) (*store.Jo
 	txn := j.db.Txn(true)
 	defer txn.Abort()
 
-	existingRegion, err := txn.First(jobRegisterRuleTableName, indexID, req.Rule.Name)
+	existingRule, err := txn.First(jobRegisterRuleTableName, indexID, req.Rule.Namespace, req.Rule.Name)
 	if err != nil {
 		return nil, store.NewErrorResp(fmt.Errorf("failed to read job register rule: %w", err), 500)
 	}
-	if existingRegion != nil {
+	if existingRule != nil {
 		return nil, store.NewErrorResp(fmt.Errorf("job register rule %q already exists", req.Rule.Name), 400)
+	}
+
+	// Inside the same transaction, ensure the namespace exists that the rule
+	// references.
+	ns, err := txn.First(namespaceTableName, indexID, req.Rule.Namespace)
+	if err != nil {
+		return nil, store.NewErrorResp(fmt.Errorf("failed to read namespace: %w", err), 500)
+	}
+	if ns == nil {
+		return nil, store.NewErrorResp(fmt.Errorf("namespace %q not found", req.Rule.Namespace), 404)
 	}
 
 	if err := txn.Insert(jobRegisterRuleTableName, req.Rule); err != nil {
@@ -42,15 +52,15 @@ func (j *JobRegisterRule) Delete(req *store.JobRegisterRuleDeleteReq) (*store.Jo
 	txn := j.db.Txn(true)
 	defer txn.Abort()
 
-	existingMethod, err := txn.First(jobRegisterRuleTableName, indexID, req.Name)
+	existingRule, err := txn.First(jobRegisterRuleTableName, indexID, req.Namespace, req.Name)
 	if err != nil {
 		return nil, store.NewErrorResp(fmt.Errorf("failed to read job register rule: %w", err), 500)
 	}
-	if existingMethod == nil {
+	if existingRule == nil {
 		return nil, store.NewErrorResp(fmt.Errorf("job register rule %q not found", req.Name), 404)
 	}
 
-	if err := txn.Delete(jobRegisterRuleTableName, existingMethod); err != nil {
+	if err := txn.Delete(jobRegisterRuleTableName, existingRule); err != nil {
 		return nil, store.NewErrorResp(fmt.Errorf("failed to delete job register rule: %w", err), 500)
 	}
 
@@ -62,23 +72,23 @@ func (j *JobRegisterRule) Get(req *store.JobRegisterRuleGetReq) (*store.JobRegis
 	txn := j.db.Txn(false)
 	defer txn.Abort()
 
-	existingMethod, err := txn.First(jobRegisterRuleTableName, indexID, req.Name)
+	existingRule, err := txn.First(jobRegisterRuleTableName, indexID, req.Namespace, req.Name)
 	if err != nil {
 		return nil, store.NewErrorResp(fmt.Errorf("failed to read job register rule: %w", err), 500)
 	}
-	if existingMethod == nil {
+	if existingRule == nil {
 		return nil, store.NewErrorResp(fmt.Errorf("job register rule %q not found", req.Name), 404)
 	}
 
 	txn.Commit()
-	return &store.JobRegisterRuleGetResp{Rule: existingMethod.(*domain.JobRegisterRule)}, nil
+	return &store.JobRegisterRuleGetResp{Rule: existingRule.(*domain.JobRegisterRule)}, nil
 }
 
 func (j *JobRegisterRule) List(req *store.JobRegisterRuleListReq) (*store.JobRegisterRuleListResp, *store.ErrorResp) {
 	txn := j.db.Txn(false)
 	defer txn.Abort()
 
-	iter, err := txn.Get(jobRegisterRuleTableName, indexID)
+	iter, err := txn.Get(jobRegisterRuleTableName, "namespace", req.Namespace)
 	if err != nil {
 		return nil, store.NewErrorResp(fmt.Errorf("failed to list job register rules: %w", err), 500)
 	}

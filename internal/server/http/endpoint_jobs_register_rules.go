@@ -64,15 +64,33 @@ func (j jobsRegisterRulesEndpoint) create(w http.ResponseWriter, r *http.Request
 	var ruleObj domain.JobRegisterRule
 
 	if err := json.NewDecoder(r.Body).Decode(&ruleObj); err != nil {
-		httpWriteResponseError(w, NewResponseError(fmt.Errorf("failed to decode object: %w", err), http.StatusBadRequest))
+		httpWriteResponseError(
+			w,
+			NewResponseError(fmt.Errorf("failed to decode object: %w", err), http.StatusBadRequest),
+		)
 		return
 	}
+
+	httpRequestNamespace := reqNamespace(r)
+
+	//
+	ruleObj.SetDefaults(httpRequestNamespace)
 
 	if err := ruleObj.Validate(); err != nil {
 		respErr := NewResponseError(err, http.StatusBadRequest)
 		httpWriteResponseError(w, respErr)
 		return
 	}
+
+	//
+	if !namespacesMatch(ruleObj.Namespace, httpRequestNamespace) {
+		httpWriteResponseError(
+			w,
+			NewResponseError(errors.New("object and request namespace mismatch"), http.StatusConflict),
+		)
+		return
+	}
+
 	var strategySpecs []*jobsdk.RegionPickerConfig
 
 	if len(ruleObj.RegionPickers) > 0 {
@@ -102,9 +120,11 @@ func (j jobsRegisterRulesEndpoint) create(w http.ResponseWriter, r *http.Request
 }
 
 func (j jobsRegisterRulesEndpoint) delete(w http.ResponseWriter, r *http.Request) {
-	ruleName := r.Context().Value("rule-name").(string)
 
-	stateReq := store.JobRegisterRuleDeleteReq{Name: ruleName}
+	stateReq := store.JobRegisterRuleDeleteReq{
+		Name:      r.Context().Value("rule-name").(string),
+		Namespace: reqNamespace(r),
+	}
 
 	_, err := j.state.JobRegister().Rule().Delete(&stateReq)
 	if err != nil {
@@ -119,9 +139,11 @@ func (j jobsRegisterRulesEndpoint) delete(w http.ResponseWriter, r *http.Request
 }
 
 func (j jobsRegisterRulesEndpoint) get(w http.ResponseWriter, r *http.Request) {
-	ruleName := r.Context().Value("rule-name").(string)
 
-	stateReq := store.JobRegisterRuleGetReq{Name: ruleName}
+	stateReq := store.JobRegisterRuleGetReq{
+		Name:      r.Context().Value("rule-name").(string),
+		Namespace: reqNamespace(r),
+	}
 
 	ruleGetResp, err := j.state.JobRegister().Rule().Get(&stateReq)
 	if err != nil {
@@ -137,7 +159,8 @@ func (j jobsRegisterRulesEndpoint) get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (j jobsRegisterRulesEndpoint) list(w http.ResponseWriter, r *http.Request) {
-	ruleListResp, err := j.state.JobRegister().Rule().List(&store.JobRegisterRuleListReq{})
+
+	ruleListResp, err := j.state.JobRegister().Rule().List(&store.JobRegisterRuleListReq{Namespace: reqNamespace(r)})
 	if err != nil {
 		respErr := NewResponseError(err.Err(), err.StatusCode())
 		httpWriteResponseError(w, respErr)

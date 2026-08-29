@@ -9,9 +9,10 @@ import (
 )
 
 type JobRegisterPlan struct {
-	ID      ulid.ULID                         `json:"id"`
-	Job     *api.Job                          `json:"job"`
-	Regions map[string]*JobRegisterRegionPlan `json:"regions"`
+	ID        ulid.ULID                         `json:"id"`
+	Namespace string                            `json:"namespace"`
+	Job       *api.Job                          `json:"job"`
+	Regions   map[string]*JobRegisterRegionPlan `json:"regions"`
 }
 
 type JobRegisterRegionPlan struct {
@@ -19,11 +20,12 @@ type JobRegisterRegionPlan struct {
 	Plan   *api.JobPlanResponse `json:"plan"`
 }
 
-func NewJobRegisterPlan(job *api.Job) *JobRegisterPlan {
+func NewJobRegisterPlan(namespace string, job *api.Job) *JobRegisterPlan {
 	return &JobRegisterPlan{
-		ID:      ulid.Make(),
-		Job:     job,
-		Regions: make(map[string]*JobRegisterRegionPlan),
+		ID:        ulid.Make(),
+		Namespace: namespace,
+		Job:       job,
+		Regions:   make(map[string]*JobRegisterRegionPlan),
 	}
 }
 

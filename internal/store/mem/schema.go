@@ -16,10 +16,14 @@ const (
 	// to directly translate to a field named ID on the stored object, but
 	// should be mapped to the field which will be used for default lookups.
 	indexID = "id"
+
+	//
+	indexNamespace = "namespace"
 )
 
 const (
 	regionTableName            = "region"
+	namespaceTableName         = "namespace"
 	jobRegisterMethodTableName = "job_register_method"
 	jobRegisterRuleTableName   = "job_register_rule"
 	jobRegisterPlanTableName   = "job_register_plan"
@@ -48,10 +52,27 @@ func newTableSchema() *memdb.DBSchema {
 
 func tableSchemas() []func() *memdb.TableSchema {
 	return []func() *memdb.TableSchema{
+		namespaceTableSchema,
 		jobRegisterMethodTableSchema,
 		jobRegisterPlanTableSchema,
 		jobRegisterRuleTableSchema,
 		regionTableSchema,
+	}
+}
+
+func namespaceTableSchema() *memdb.TableSchema {
+	return &memdb.TableSchema{
+		Name: namespaceTableName,
+		Indexes: map[string]*memdb.IndexSchema{
+			indexID: {
+				Name:         indexID,
+				AllowMissing: false,
+				Unique:       true,
+				Indexer: &memdb.StringFieldIndex{
+					Field: "Name",
+				},
+			},
+		},
 	}
 }
 
@@ -79,9 +100,18 @@ func jobRegisterMethodTableSchema() *memdb.TableSchema {
 				Name:         indexID,
 				AllowMissing: false,
 				Unique:       true,
-				Indexer: &memdb.StringFieldIndex{
-					Field: "Name",
+				Indexer: &memdb.CompoundIndex{
+					Indexes: []memdb.Indexer{
+						&memdb.StringFieldIndex{Field: "Namespace"},
+						&memdb.StringFieldIndex{Field: "Name"},
+					},
 				},
+			},
+			indexNamespace: {
+				Name:         indexNamespace,
+				AllowMissing: false,
+				Unique:       false,
+				Indexer:      &memdb.StringFieldIndex{Field: "Namespace"},
 			},
 		},
 	}
@@ -95,9 +125,18 @@ func jobRegisterRuleTableSchema() *memdb.TableSchema {
 				Name:         indexID,
 				AllowMissing: false,
 				Unique:       true,
-				Indexer: &memdb.StringFieldIndex{
-					Field: "Name",
+				Indexer: &memdb.CompoundIndex{
+					Indexes: []memdb.Indexer{
+						&memdb.StringFieldIndex{Field: "Namespace"},
+						&memdb.StringFieldIndex{Field: "Name"},
+					},
 				},
+			},
+			indexNamespace: {
+				Name:         indexNamespace,
+				AllowMissing: false,
+				Unique:       false,
+				Indexer:      &memdb.StringFieldIndex{Field: "Namespace"},
 			},
 		},
 	}
@@ -115,6 +154,12 @@ func jobRegisterPlanTableSchema() *memdb.TableSchema {
 					ReadIndex:  index.ReadIndex(index.ReadULIDIndex),
 					WriteIndex: index.WriteIndex(index.WriteULIDIndex),
 				},
+			},
+			indexNamespace: {
+				Name:         indexNamespace,
+				AllowMissing: false,
+				Unique:       false,
+				Indexer:      &memdb.StringFieldIndex{Field: "Namespace"},
 			},
 			"job_id": {
 				Name:         "job_id",

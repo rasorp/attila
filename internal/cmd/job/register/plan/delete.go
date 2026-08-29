@@ -4,7 +4,6 @@
 package plan
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/oklog/ulid/v2"
@@ -21,7 +20,7 @@ func deleteCommand() *cli.Command {
 		Category:  "plan",
 		Args:      true,
 		UsageText: "attila job register plan delete [options] [plan-id]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			if numArgs := cliCtx.Args().Len(); numArgs != 1 {
@@ -39,9 +38,11 @@ func deleteCommand() *cli.Command {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			deleteReq := api.JobRegisterPlanDeleteReq{ID: id}
-
-			_, err = client.JobRegisterPlans().Delete(context.Background(), &deleteReq)
+			_, err = client.JobRegisterPlans().Delete(
+				cliCtx.Context,
+				&api.JobRegisterPlanDeleteReq{ID: id},
+				&api.WriteOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError(deleteCLIErrorMsg, err), 1)
 			}

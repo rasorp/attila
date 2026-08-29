@@ -1,4 +1,5 @@
-name = "europe-platform"
+name      = "europe-platform"
+namespace = "default"
 
 selector "namespace_platform" {
   provider = "filter"

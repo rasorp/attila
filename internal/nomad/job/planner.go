@@ -15,6 +15,7 @@ import (
 	"github.com/rasorp/attila/internal/register/method/selector"
 	"github.com/rasorp/attila/internal/register/region/picker"
 	pickercontext "github.com/rasorp/attila/internal/register/region/picker/context"
+	"github.com/rasorp/attila/internal/server/state"
 	"github.com/rasorp/attila/internal/store"
 	jobsdk "github.com/rasorp/attila/pkg/job"
 )
@@ -23,17 +24,19 @@ import (
 type Planner struct {
 	logger *zap.Logger
 
-	clients *client.Clients
-	job     *api.Job
-	state   store.State
+	clients   *client.Clients
+	job       *api.Job
+	namespace string
+	state     store.State
 
 	plan *domain.JobRegisterPlan
 }
 
 type PlannerReq struct {
-	Clients *client.Clients
-	Job     *api.Job
-	State   store.State
+	Clients   *client.Clients
+	Job       *api.Job
+	Namespace string
+	State     store.State
 }
 
 func NewPlanner(logger *zap.Logger, req *PlannerReq) *Planner {
@@ -44,13 +47,15 @@ func NewPlanner(logger *zap.Logger, req *PlannerReq) *Planner {
 			zap.String("job_id", *req.Job.ID),
 			zap.String("job_namespace", *req.Job.Namespace),
 		).Named("job_plan"),
-		plan:  domain.NewJobRegisterPlan(req.Job),
-		state: req.State,
+		namespace: req.Namespace,
+		plan:      domain.NewJobRegisterPlan(req.Namespace, req.Job),
+		state:     req.State,
 	}
 }
 
 func (p *Planner) Run() (*domain.JobRegisterPlan, error) {
-	listResp, err := p.state.JobRegister().Method().List(nil)
+
+	listResp, err := p.state.JobRegister().Method().List(&store.JobRegisterMethodListReq{Namespace: p.namespace})
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +85,10 @@ func (p *Planner) Run() (*domain.JobRegisterPlan, error) {
 		}
 
 		for _, ruleLink := range method.Rules {
-			regRule, err := p.state.JobRegister().Rule().Get(&store.JobRegisterRuleGetReq{Name: ruleLink.Name})
+			regRule, err := p.state.JobRegister().Rule().Get(&store.JobRegisterRuleGetReq{
+				Name:      ruleLink.Name,
+				Namespace: p.namespace,
+			})
 			if err != nil {
 				return nil, err
 			}
@@ -91,13 +99,37 @@ func (p *Planner) Run() (*domain.JobRegisterPlan, error) {
 		}
 	}
 
+	// Resolve the effective region set for this namespace.
+	var availableRegions []*domain.Region
+
+	refNs, refErr := p.state.Namespace().Get(&state.NamespaceGetReq{Name: p.namespace})
+	if refErr != nil {
+		return nil, refErr
+	}
+
 	regionListResp, err := p.state.Region().List(nil)
 	if err != nil {
 		return nil, err
 	}
 
+	// "*" means all regions.
+	if len(refNs.Namespace.Regions) == 1 && refNs.Namespace.Regions[0] == domain.NamespaceRegionsWildcard {
+		availableRegions = regionListResp.Regions
+	} else {
+		réfSet := make(map[string]struct{}, len(refNs.Namespace.Regions))
+		for _, r := range refNs.Namespace.Regions {
+			réfSet[r] = struct{}{}
+		}
+		availableRegions = make([]*domain.Region, 0, len(regionListResp.Regions))
+		for _, region := range regionListResp.Regions {
+			if _, ok := réfSet[region.Name]; ok {
+				availableRegions = append(availableRegions, region)
+			}
+		}
+	}
+
 	for _, rule := range rules {
-		pickedRegions, err := p.runRegisterPlanPicker(rule, regionListResp.Regions)
+		pickedRegions, err := p.runRegisterPlanPicker(rule, availableRegions)
 		if err != nil {
 			return nil, err
 		}

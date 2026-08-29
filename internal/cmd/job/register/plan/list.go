@@ -4,7 +4,6 @@
 package plan
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
@@ -20,12 +19,16 @@ func listCommand() *cli.Command {
 		Category:  "plan",
 		Args:      false,
 		UsageText: "attila job register plan list [options]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			listResp, _, err := client.JobRegisterPlans().List(context.Background(), nil)
+			listResp, _, err := client.JobRegisterPlans().List(
+				cliCtx.Context,
+				nil,
+				&api.QueryOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError(listCLIErrorMsg, err), 1)
 			}

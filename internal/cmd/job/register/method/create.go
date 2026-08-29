@@ -4,7 +4,6 @@
 package method
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
@@ -25,7 +24,7 @@ func createCommand() *cli.Command {
 		Category:  "method",
 		Args:      true,
 		UsageText: "attila job register method create [options] [method-spec]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			if numArgs := cliCtx.Args().Len(); numArgs != 1 {
@@ -40,7 +39,11 @@ func createCommand() *cli.Command {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			methodCreateResp, _, err := client.JobRegisterMethods().Create(context.Background(), &methodObj)
+			methodCreateResp, _, err := client.JobRegisterMethods().Create(
+				cliCtx.Context,
+				&methodObj,
+				&api.WriteOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError(createErrorMsg, err), 1)
 			}

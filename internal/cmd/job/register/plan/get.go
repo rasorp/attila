@@ -4,7 +4,6 @@
 package plan
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/oklog/ulid/v2"
@@ -21,7 +20,7 @@ func getCommand() *cli.Command {
 		Category:  "plan",
 		Args:      true,
 		UsageText: "attila job register plan get [options] [plan-id]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			if numArgs := cliCtx.Args().Len(); numArgs != 1 {
@@ -39,9 +38,11 @@ func getCommand() *cli.Command {
 				return cli.Exit(helper.FormatError(getCLIErrorMsg, err), 1)
 			}
 
-			getReq := api.JobRegisterPlanGetReq{ID: id}
-
-			getResp, _, err := client.JobRegisterPlans().Get(context.Background(), &getReq)
+			getResp, _, err := client.JobRegisterPlans().Get(
+				cliCtx.Context,
+				&api.JobRegisterPlanGetReq{ID: id},
+				&api.QueryOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError(getCLIErrorMsg, err), 1)
 			}

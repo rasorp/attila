@@ -58,7 +58,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		baseLogger:      baseLogger,
 		serverLogger:    baseLogger.Named("server"),
 		state:           backend,
-		nomadController: nomadControler.NewController(baseLogger),
+		nomadController: nomadControler.NewController(baseLogger, backend),
 	}
 
 	server.serverLogger.Info("successfully setup state backend")

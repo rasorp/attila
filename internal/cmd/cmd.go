@@ -11,6 +11,7 @@ import (
 
 	"github.com/rasorp/attila/internal/cmd/helper"
 	"github.com/rasorp/attila/internal/cmd/job"
+	"github.com/rasorp/attila/internal/cmd/namespace"
 	"github.com/rasorp/attila/internal/cmd/region"
 	"github.com/rasorp/attila/internal/cmd/server"
 	"github.com/rasorp/attila/internal/cmd/topology"
@@ -31,6 +32,7 @@ func main() {
 	cliApp := cli.App{
 		Commands: []*cli.Command{
 			job.Command(),
+			namespace.Command(),
 			region.Command(),
 			server.Command(),
 			topology.Command(),

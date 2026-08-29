@@ -12,9 +12,17 @@ import (
 
 type JobRegisterMethod struct {
 	Name      string                         `json:"name"`
+	Namespace string                         `json:"namespace"`
 	Selectors []*jobsdk.MethodSelectorConfig `json:"selectors"`
 	Rules     []*JobRegisterMethodRuleLink   `json:"rules"`
 	Metadata  *Metadata                      `json:"metadata"`
+}
+
+func (j *JobRegisterMethod) SetDefaults(reqNamespace string) {
+	if j.Namespace == "" {
+		j.Namespace = reqNamespace
+	}
+	j.Metadata = NewMetadata()
 }
 
 func (m *JobRegisterMethod) Validate() error {
@@ -58,12 +66,14 @@ func (m *JobRegisterMethod) Stub() *JobRegisterMethodStub {
 
 	return &JobRegisterMethodStub{
 		Name:      m.Name,
+		Namespace: m.Namespace,
 		Selectors: selectors,
 	}
 }
 
 type JobRegisterMethodStub struct {
 	Name      string                           `json:"name"`
+	Namespace string                           `json:"namespace"`
 	Selectors []*JobRegisterMethodSelectorStub `json:"selectors"`
 }
 

@@ -21,12 +21,15 @@ func listCommand() *cli.Command {
 		Category:  "method",
 		Args:      false,
 		UsageText: "attila job register method list [options]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			methodListResp, _, err := client.JobRegisterMethods().List(context.Background())
+			methodListResp, _, err := client.JobRegisterMethods().List(
+				context.Background(),
+				&api.QueryOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError("failed to list Attila job registration methods", err), 1)
 			}

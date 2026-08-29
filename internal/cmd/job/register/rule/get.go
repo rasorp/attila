@@ -4,7 +4,6 @@
 package rule
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
@@ -20,7 +19,7 @@ func getCommand() *cli.Command {
 		Category:  "rule",
 		Args:      true,
 		UsageText: "attila job register rule get [options] [rule-name]",
-		Flags:     helper.ClientFlags(),
+		Flags:     helper.ClientNamespaceFlags(),
 		Action: func(cliCtx *cli.Context) error {
 
 			if numArgs := cliCtx.Args().Len(); numArgs != 1 {
@@ -31,7 +30,11 @@ func getCommand() *cli.Command {
 
 			client := api.NewClient(helper.ClientConfigFromFlags(cliCtx))
 
-			ruleResp, _, err := client.JobRegisterRules().Get(context.Background(), cliCtx.Args().First())
+			ruleResp, _, err := client.JobRegisterRules().Get(
+				cliCtx.Context,
+				cliCtx.Args().First(),
+				&api.QueryOpts{Namespace: helper.NamespaceFromFlags(cliCtx)},
+			)
 			if err != nil {
 				return cli.Exit(helper.FormatError("failed to get Attila job registration rule", err), 1)
 			}
