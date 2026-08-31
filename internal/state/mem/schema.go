@@ -17,7 +17,8 @@ const (
 	// should be mapped to the field which will be used for default lookups.
 	indexID = "id"
 
-	//
+	// indexNamespace is the Attila namespace index that should be used by
+	// tables that store resources that can be namespaced.
 	indexNamespace = "namespace"
 )
 
@@ -27,6 +28,7 @@ const (
 	jobRegisterMethodTableName = "job_register_method"
 	jobRegisterRuleTableName   = "job_register_rule"
 	jobRegisterPlanTableName   = "job_register_plan"
+	jobRegisterRunTableName    = "job_register_run"
 )
 
 func newTableSchema() *memdb.DBSchema {
@@ -55,6 +57,7 @@ func tableSchemas() []func() *memdb.TableSchema {
 		namespaceTableSchema,
 		jobRegisterMethodTableSchema,
 		jobRegisterPlanTableSchema,
+		jobRegisterRunTableSchema,
 		jobRegisterRuleTableSchema,
 		regionTableSchema,
 	}
@@ -105,6 +108,29 @@ func jobRegisterMethodTableSchema() *memdb.TableSchema {
 						&memdb.StringFieldIndex{Field: "Namespace"},
 						&memdb.StringFieldIndex{Field: "Name"},
 					},
+				},
+			},
+			indexNamespace: {
+				Name:         indexNamespace,
+				AllowMissing: false,
+				Unique:       false,
+				Indexer:      &memdb.StringFieldIndex{Field: "Namespace"},
+			},
+		},
+	}
+}
+
+func jobRegisterRunTableSchema() *memdb.TableSchema {
+	return &memdb.TableSchema{
+		Name: jobRegisterRunTableName,
+		Indexes: map[string]*memdb.IndexSchema{
+			indexID: {
+				Name:         indexID,
+				AllowMissing: false,
+				Unique:       true,
+				Indexer: &index.SingleIndexer{
+					ReadIndex:  index.ReadIndex(index.ReadULIDIndex),
+					WriteIndex: index.WriteIndex(index.WriteULIDIndex),
 				},
 			},
 			indexNamespace: {

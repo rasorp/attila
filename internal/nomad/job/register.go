@@ -12,10 +12,10 @@ import (
 )
 
 type Register struct {
-	logger    *zap.Logger
-	clients   *client.Clients
-	plan      *domain.JobRegisterPlan
-	runResult *domain.JobRegisterPlanRun
+	logger  *zap.Logger
+	clients *client.Clients
+	plan    *domain.JobRegisterPlan
+	run     *domain.JobRegisterRun
 }
 
 type RegisterReq struct {
@@ -31,18 +31,18 @@ func NewRegister(logger *zap.Logger, req *RegisterReq) *Register {
 			zap.String("job_namespace", *req.Plan.Job.Namespace),
 			zap.String("plan_id", req.Plan.ID.String()),
 		).Named("job_register"),
-		plan:      req.Plan,
-		runResult: domain.NewJobRegisterPlanRun(req.Plan.Job),
+		plan: req.Plan,
+		run:  domain.NewJobRegisterRun(req.Plan),
 	}
 }
 
-func (r *Register) Run() (*domain.JobRegisterPlanRun, error) {
+func (r *Register) Run() (*domain.JobRegisterRun, error) {
 	for _, plannedRegion := range r.plan.Regions {
 		if err := r.runPlannedRegion(plannedRegion, r.plan.Job); err != nil {
 			return nil, err
 		}
 	}
-	return r.runResult, nil
+	return r.run, nil
 }
 
 func (r *Register) runPlannedRegion(regionPlan *domain.JobRegisterRegionPlan, apiJob *api.Job) error {
@@ -63,7 +63,7 @@ func (r *Register) runPlannedRegion(regionPlan *domain.JobRegisterRegionPlan, ap
 	)
 
 	registerResp, _, err := apiClient.Jobs().RegisterOpts(apiJob, &registerOpts, nil)
-	r.runResult.AddRegion(regionPlan.Region, registerResp, err)
+	r.run.AddRegion(regionPlan.Region, registerResp, err)
 
 	if err != nil {
 		r.logger.Error(

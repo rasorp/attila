@@ -43,8 +43,8 @@ type JobsRegisterPlansListResp struct {
 }
 
 type JobsRegisterPlansRunResp struct {
-	Run                  *domain.JobRegisterPlanRun `json:"run"`
-	PatrialFailureError  error                      `json:"partial_failure_error"`
+	Run                  *domain.JobRegisterRun `json:"run"`
+	PatrialFailureError  error                  `json:"partial_failure_error"`
 	internalResponseMeta `json:"-"`
 }
 
@@ -188,10 +188,11 @@ func (j jobsRegisterPlansEndpoint) run(w http.ResponseWriter, r *http.Request) {
 		responseCode = http.StatusInternalServerError
 	}
 
-	stateReq := domain.JobRegisterPlanDeleteReq{ID: planID, Namespace: requestNS}
+	stateReq := domain.JobRegisterRunCreateReq{Run: result.Run}
 
-	if _, err := j.state.JobRegister().Plan().Delete(&stateReq); err != nil {
-		j.logger.Error("failed to delete job register plan", zap.Error(err))
+	if _, err := j.state.JobRegister().Run().Create(&stateReq); err != nil {
+		httpWriteResponseError(w, NewResponseError(err.Err(), err.StatusCode()))
+		return
 	}
 
 	httpWriteResponse(w, &JobsRegisterPlansRunResp{

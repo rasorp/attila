@@ -32,6 +32,9 @@ type JobRegisterState interface {
 
 	// Rule returns a state accessor for job register rules.
 	Rule() JobRegisterRuleState
+
+	// Run returns a state accessor for job register runs.
+	Run() JobRegisterRunState
 }
 
 // StateError is returned by state methods to carry structured error

@@ -421,4 +421,12 @@ func TestE2E(t *testing.T) {
 	must.StrContains(t, planRun, "Num Regions")
 	must.StrContains(t, planRun, "euw1")
 	must.StrContains(t, planRun, "Eval ID")
+
+	// Create a registration run without the plan step.
+	createRun, err := runCLI(ctx, atBin, "job", "register", "run", "create", nomadJobPath)
+	must.NoError(t, err)
+	must.StrContains(t, createRun, "Num Regions   = 1")
+	must.StrContains(t, createRun, "Job Namespace = platform")
+	must.StrContains(t, createRun, "euw1")
+	must.StrContains(t, createRun, "Eval ID")
 }
