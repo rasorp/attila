@@ -43,9 +43,9 @@ func runFlags() []cli.Flag {
 			Usage: "The path to a config file",
 		},
 		&cli.StringFlag{
-			Name:  "http-access-log-level",
-			Value: "info",
-			Usage: "The log verbosity to use for HTTP access logs",
+			DefaultText: "debug",
+			Name:        "http-access-log-level",
+			Usage:       "The log verbosity to use for HTTP access logs",
 		},
 		&cli.StringSliceFlag{
 			Name:  "http-bind-address",
