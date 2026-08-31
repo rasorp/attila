@@ -23,9 +23,12 @@ func ReadULIDIndex(arg any) ([]byte, error) {
 }
 
 func WriteULIDIndex(raw any) ([]byte, error) {
-	plan, ok := raw.(*domain.JobRegisterPlan)
-	if !ok {
-		return nil, fmt.Errorf("unexpected type %T for job register plan", raw)
+	switch t := raw.(type) {
+	case *domain.JobRegisterPlan:
+		return t.ID.Bytes(), nil
+	case *domain.JobRegisterRun:
+		return t.ID.Bytes(), nil
+	default:
+		return nil, fmt.Errorf("unexpected type %T for ULID index", raw)
 	}
-	return plan.ID.Bytes(), nil
 }

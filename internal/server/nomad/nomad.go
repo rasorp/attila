@@ -37,7 +37,7 @@ type JobRegistrationPlanRunReq struct {
 // JobRegistrationPlanRunResp is the response object used when the controller
 // has executed a run of a Nomad job registration plan.
 type JobRegistrationPlanRunResp struct {
-	Run *domain.JobRegisterPlanRun
+	Run *domain.JobRegisterRun
 }
 
 // JobRegistrationController is the interface that defines how Attila performs

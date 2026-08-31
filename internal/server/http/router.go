@@ -46,5 +46,10 @@ func jobRouter(logger *zap.Logger, stateStore domain.State, nomadController noma
 		state: stateStore,
 	}.routes())
 
+	r.Mount("/register/runs", jobsRegisterRunsEndpoint{
+		nomadController: nomadController,
+		state:           stateStore,
+	}.routes())
+
 	return r
 }

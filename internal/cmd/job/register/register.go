@@ -9,6 +9,7 @@ import (
 	"github.com/rasorp/attila/internal/cmd/job/register/method"
 	"github.com/rasorp/attila/internal/cmd/job/register/plan"
 	"github.com/rasorp/attila/internal/cmd/job/register/rule"
+	"github.com/rasorp/attila/internal/cmd/job/register/run"
 )
 
 func Command() *cli.Command {
@@ -22,6 +23,7 @@ func Command() *cli.Command {
 			method.Command(),
 			plan.Command(),
 			rule.Command(),
+			run.Command(),
 		},
 	}
 }

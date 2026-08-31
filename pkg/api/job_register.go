@@ -360,13 +360,6 @@ type JobRegisterRegionPlan struct {
 	Plan   *api.JobPlanResponse `json:"plan"`
 }
 
-type JobRegisterPlanRun struct {
-	ID           ulid.ULID                            `json:"id"`
-	JobID        string                               `json:"job_id"`
-	JobNamespace string                               `json:"job_namespace"`
-	Regions      map[string]*JobRegisterRegionPlanRun `json:"regions"`
-}
-
 type JobRegisterRegionPlanRun struct {
 	Region       string                   `json:"region"`
 	RegisterResp *api.JobRegisterResponse `json:"register_response"`
@@ -406,8 +399,8 @@ type JobsRegisterPlanRunReq struct {
 }
 
 type JobsRegisterPlanRunResp struct {
-	Run                 *JobRegisterPlanRun `json:"run"`
-	PatrialFailureError error               `json:"partial_failure_error"`
+	Run                 *JobRegisterRun `json:"run"`
+	PatrialFailureError error           `json:"partial_failure_error"`
 }
 
 type JobRegisterPlans struct {

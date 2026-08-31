@@ -76,7 +76,7 @@ func (j *JobRegisterPlan) List(req *domain.JobRegisterPlanListReq) (*domain.JobR
 	txn := j.db.Txn(false)
 	defer txn.Abort()
 
-	iter, err := txn.Get(jobRegisterPlanTableName, indexID, req.Namespace)
+	iter, err := txn.Get(jobRegisterPlanTableName, indexNamespace, req.Namespace)
 	if err != nil {
 		return nil, domain.NewStateErrorResp(fmt.Errorf("failed to list job registration plans: %w", err), 500)
 	}

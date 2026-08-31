@@ -8,6 +8,7 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+// JobRegisterPlanState provides access to job registration plan resources.
 type JobRegisterPlanState interface {
 	Create(*JobRegisterPlanCreateReq) (*JobRegisterPlanCreateResp, StateError)
 	Delete(*JobRegisterPlanDeleteReq) (*JobRegisterPlanDeleteResp, StateError)
@@ -73,38 +74,4 @@ func (j *JobRegisterPlan) AddRegion(region *Region, nomadPlan *api.JobPlanRespon
 		Region: region.Name,
 		Plan:   nomadPlan,
 	}
-}
-
-type JobRegisterPlanRun struct {
-	ID           ulid.ULID                            `json:"id"`
-	JobID        string                               `json:"job_id"`
-	JobNamespace string                               `json:"job_namespace"`
-	Regions      map[string]*JobRegisterRegionPlanRun `json:"regions"`
-}
-
-type JobRegisterRegionPlanRun struct {
-	Region       string                   `json:"region"`
-	RegisterResp *api.JobRegisterResponse `json:"register_response"`
-	Error        error                    `json:"error"`
-}
-
-func NewJobRegisterPlanRun(job *api.Job) *JobRegisterPlanRun {
-	return &JobRegisterPlanRun{
-		ID:           ulid.Make(),
-		JobID:        *job.ID,
-		JobNamespace: *job.Namespace,
-		Regions:      make(map[string]*JobRegisterRegionPlanRun),
-	}
-}
-
-func (j *JobRegisterPlanRun) AddRegion(regionName string, regResp *api.JobRegisterResponse, err error) {
-	runResp := JobRegisterRegionPlanRun{Region: regionName}
-
-	if err != nil {
-		runResp.Error = err
-	} else {
-		runResp.RegisterResp = regResp
-	}
-
-	j.Regions[regionName] = &runResp
 }
