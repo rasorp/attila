@@ -124,7 +124,7 @@ func DefaultConfig() *Config {
 		Log:   logger.DefaultConfig(),
 		State: state.DefaultConfig(),
 		HTTP: &HTTPConfig{
-			AccessLogLevel: "info",
+			AccessLogLevel: zap.DebugLevel.String(),
 			Binds: []*BindConfig{
 				{
 					Addr: "http://127.0.0.1:8080",
