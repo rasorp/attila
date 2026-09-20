@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/go-cty-funcs v0.1.0
 	github.com/hashicorp/go-memdb v1.3.5
 	github.com/hashicorp/go-set/v3 v3.0.1
-	github.com/hashicorp/hcl/v2 v2.20.2-nomad-1
+	github.com/hashicorp/hcl/v2 v2.25.0
 	github.com/hashicorp/nomad/api v0.0.0-20260814142628-f3fe893c53d2
 	github.com/hashicorp/nomad/jobspec2 v0.0.0-20260821123358-aa026cc99cfb
 	github.com/oklog/ulid/v2 v2.1.2
